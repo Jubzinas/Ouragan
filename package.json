@@ -31,6 +31,8 @@
     "circom_tester": "^0.0.19",
     "circomlib": "^2.0.2",
     "circomlibjs": "^0.1.7",
+    "ffjavascript": "^0.2.59",
+    "maci-domainobjs": "^1.1.2",
     "poseidon-lite": "^0.2.0",
     "private-market-utils": "^0.0.4"
   },

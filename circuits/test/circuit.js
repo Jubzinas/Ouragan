@@ -4,6 +4,17 @@ const { poseidon2 } = require("poseidon-lite/poseidon2");
 const wasm_tester = require("circom_tester").wasm;
 const path = require("path");
 const { utilsMarket, utilsCrypto } = require('private-market-utils');
+const { Keypair } = require("maci-domainobjs");
+
+//tc dependencies
+const crypto = require("crypto");
+const { buildBabyjub, buildPedersenHash } = require("circomlibjs");
+const utils = require("ffjavascript").utils;
+const rbigint = (nbytes) => utils.leBuff2int(crypto.randomBytes(nbytes))
+
+
+
+
 
 describe("Circuit Test", function () {
 
@@ -65,5 +76,45 @@ describe("Circuit Test", function () {
         expect(user.ecdsaKeypair).to.exist;
         expect(user.jubJubKeypair).to.exist;
     });
+
+    it('Should calculate the same ECDH value for both buyer and seller', () => {
+        const buyer = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+        const seller = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+
+        const sharedKeyBuyer = Keypair.genEcdhSharedKey(
+            buyer.privJubJubKey,
+            seller.pubJubJubKey
+        );
+        const sharedKeySeller = Keypair.genEcdhSharedKey(
+            seller.privJubJubKey,
+            buyer.pubJubJubKey
+        );
+
+        // assert both keys are equal (buyer and seller)
+        assert.deepEqual(sharedKeyBuyer, sharedKeySeller);
+    });
+
+    it('Should create a nullifier and secret - hash them and create commitment', async () => {
+        let deposit = {
+            secret: rbigint(31),
+            nullifier: rbigint(31),
+        }
+        const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
+        //unPackpoint
+        let babyJub = await buildBabyjub();
+        let pedersen = await buildPedersenHash();
+        const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
+        const commitment = pedersenHash(preimage);
+
+        expect(commitment).to.exist;
+    });
+
+
+
+
 
 });
