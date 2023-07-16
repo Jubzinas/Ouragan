@@ -30,7 +30,7 @@
     "big-integer": "^1.6.51",
     "circom_tester": "^0.0.19",
     "circomlib": "^2.0.2",
-    "circomlibjs": "^0.0.8"
+    "circomlibjs": "^0.1.7"
   },
   "devDependencies": {
     "chai": "^4.3.7",
