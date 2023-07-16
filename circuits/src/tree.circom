@@ -8,8 +8,7 @@ template MerkleTreeInclusionProof(nLevels) {
     signal input leaf;
     signal input pathIndices[nLevels];
     signal input siblings[nLevels];
-
-    signal output root;
+    signal input root;
 
     component poseidons[nLevels];
     component mux[nLevels];
@@ -37,7 +36,7 @@ template MerkleTreeInclusionProof(nLevels) {
         hashes[i + 1] <== poseidons[i].out;
     }
 
-    root <== hashes[nLevels];
+    root === hashes[nLevels];
 }
 
 component main = MerkleTreeInclusionProof(32); // 32 levels same as tornado cash

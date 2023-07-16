@@ -26,7 +26,11 @@
   },
   "homepage": "https://github.com/Jubzinas/Ouragan#readme",
   "dependencies": {
-    "circomlib": "^2.0.2"
+    "@zk-kit/incremental-merkle-tree": "^1.1.0",
+    "big-integer": "^1.6.51",
+    "circom_tester": "^0.0.19",
+    "circomlib": "^2.0.2",
+    "circomlibjs": "^0.0.8"
   },
   "devDependencies": {
     "chai": "^4.3.7",
