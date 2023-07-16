@@ -3,9 +3,6 @@ pragma solidity ^0.7.0;
 
 import "forge-std/Script.sol";
 import "src/ETHTornado.sol";
-import "src/Verifier.sol";
-import "src/MiMC.sol";
-import "src/MerkleTreeWithHistory.sol";
 
 contract TornadoMultipleDeposit is Script {
     uint256 FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
