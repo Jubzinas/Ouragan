@@ -4,6 +4,9 @@
 
 For testing the circuits run
 
+Install the packages
+
 ```
-npm run test-circuits
+npm install
+rm node_modules/.bin/circom
 ```

@@ -1,8 +1,9 @@
 const { expect, assert } = require("chai");
 const { IncrementalMerkleTree } = require("@zk-kit/incremental-merkle-tree");
-const { poseidon } = require("circomlibjs"); // v0.0.8npm
+const { poseidon2 } = require("poseidon-lite/poseidon2");
 const wasm_tester = require("circom_tester").wasm;
 const path = require("path");
+const { utilsMarket, utilsCrypto } = require('private-market-utils');
 
 describe("Circuit Test", function () {
 
@@ -14,7 +15,7 @@ describe("Circuit Test", function () {
     before(async () => {
         circuit = await wasm_tester(path.join(__dirname, "../src", "tree.circom"));
 
-        const tree = new IncrementalMerkleTree(poseidon, 32, BigInt(0), 2) // Binary tree.
+        const tree = new IncrementalMerkleTree(poseidon2, 32, BigInt(0), 2) // Binary tree.
 
         tree.insert(BigInt(1));
 
@@ -54,6 +55,15 @@ describe("Circuit Test", function () {
             if (error instanceof Error)
                 assert.include(error.message, 'Error in template MerkleTreeInclusionProof_69 line: 39');
         }
+    });
+
+    it("Should generate a user key pair", async () => {
+        const user = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+        // user should exist
+        expect(user.ecdsaKeypair).to.exist;
+        expect(user.jubJubKeypair).to.exist;
     });
 
 });
