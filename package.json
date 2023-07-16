@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/Jubzinas/Ouragan#readme",
   "dependencies": {
-    "circomlib": "^2.0.2"
+    "circomlib": "^2.0.2",
+    "circomlibjs": "^0.1.7"
   },
   "devDependencies": {
     "chai": "^4.3.7",
