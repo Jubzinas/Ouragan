@@ -15,11 +15,13 @@ describe("Circuit Test", function () {
 
     let circuit;
     let proof;
+    let circuit_b;
 
     this.timeout(10000000);
 
     before(async () => {
         circuit = await wasm_tester(path.join(__dirname, "../src", "tree.circom"));
+        circuit_b = await wasm_tester(path.join(__dirname, "../src", 'encryptionVerifier.circom'));
 
         const tree = new IncrementalMerkleTree(poseidon2, 32, BigInt(0), 2) // Binary tree.
 
@@ -152,5 +154,120 @@ describe("Circuit Test", function () {
             1
         )
         assert.deepEqual(decriptedCommitment, [commitment]);
+    });
+
+    it("Should generate a valid proof for circuit_b", async () => {
+        //commitment
+        let deposit = {
+            secret: rbigint(31),
+            nullifier: rbigint(31),
+        }
+        const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
+        let babyJub = await buildBabyjub();
+        let pedersen = await buildPedersenHash();
+        const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
+        const commitment = pedersenHash(preimage);
+
+        //sharedKey
+        const buyer = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+        const seller = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+
+        const sharedKeyBuyer = Keypair.genEcdhSharedKey(
+            buyer.privJubJubKey,
+            seller.pubJubJubKey
+        );
+        const sharedKeySeller = Keypair.genEcdhSharedKey(
+            seller.privJubJubKey,
+            buyer.pubJubJubKey
+        );
+
+        //encryption
+        const poseidonNonce = BigInt(Date.now().toString());
+        const encryptedCommitment = encrypt(
+            [commitment],
+            sharedKeySeller,
+            poseidonNonce
+        )
+
+        const decriptedCommitment = decrypt(
+            encryptedCommitment,
+            sharedKeyBuyer,
+            poseidonNonce,
+            1
+        )
+
+        let input = {
+            "commitment": commitment,
+            "sharedKey": sharedKeyBuyer,
+            "encryptedCommitment": encryptedCommitment,
+            "poseidonNonce": poseidonNonce
+        };
+
+        let witness = await circuit_b.calculateWitness(input);
+
+        await circuit_b.checkConstraints(witness);
+    });
+
+    it("Should generate an invalid proof for circuit_b", async () => {
+        //commitment
+        let deposit = {
+            secret: rbigint(31),
+            nullifier: rbigint(31),
+        }
+        const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
+        let babyJub = await buildBabyjub();
+        let pedersen = await buildPedersenHash();
+        const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
+        const commitment = pedersenHash(preimage);
+
+        //sharedKey
+        const buyer = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+        const seller = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+
+        const sharedKeyBuyer = Keypair.genEcdhSharedKey(
+            buyer.privJubJubKey,
+            seller.pubJubJubKey
+        );
+        const sharedKeySeller = Keypair.genEcdhSharedKey(
+            seller.privJubJubKey,
+            buyer.pubJubJubKey
+        );
+
+        //encryption
+        const poseidonNonce = BigInt(Date.now().toString());
+        const encryptedCommitment = encrypt(
+            [commitment],
+            sharedKeySeller,
+            poseidonNonce
+        )
+
+        const decriptedCommitment = decrypt(
+            encryptedCommitment,
+            sharedKeyBuyer,
+            poseidonNonce,
+            1
+        )
+
+        let invalid_input = {
+            "commitment": 1n,
+            "sharedKey": sharedKeyBuyer,
+            "encryptedCommitment": encryptedCommitment,
+            "poseidonNonce": poseidonNonce
+        };
+
+        try {
+            await circuit_b.calculateWitness(invalid_input);
+        } catch (error) {
+            if (error instanceof Error)
+                assert.include(error.message, 'Error in template EncryptionVerifier_75 line: 26');
+        }
     });
 });
