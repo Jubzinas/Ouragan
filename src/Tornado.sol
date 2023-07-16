@@ -13,7 +13,7 @@
 pragma solidity ^0.7.0;
 
 import "./MerkleTreeWithHistory.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "openzeppelin/security/ReentrancyGuard.sol";
 
 interface IVerifier {
     function verifyProof(bytes memory _proof, uint256[6] memory _input) external returns (bool);
