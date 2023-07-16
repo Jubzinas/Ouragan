@@ -1,0 +1,35 @@
+{
+  "name": "ouragan",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test-circuits": "mocha circuits/test/circuit.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jubzinas/Ouragan.git"
+  },
+  "keywords": [
+    "zk",
+    "tornado-cash",
+    "foundry"
+  ],
+  "author": "Enrico Bottazzi - Pierre DM - Giorgio",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Jubzinas/Ouragan/issues"
+  },
+  "homepage": "https://github.com/Jubzinas/Ouragan#readme",
+  "dependencies": {
+    "circomlib": "^2.0.2"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0"
+  }
+}
