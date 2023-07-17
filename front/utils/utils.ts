@@ -5,18 +5,22 @@ const merkleTree = require('fixed-merkle-tree');
 import { Leaf } from "../../core/ts-scripts/utils";
 
 export async function generateMerkleProof(cachedEvents: Leaf[], merkleTreeHeight: number, commitmentHex: string) {
-  let leafIndex = -1;
-  const leaves = cachedEvents
-      .sort((a, b) => Number(a.leafIndex) - Number(b.leafIndex))
-      .map((e) => {
-          const index = toBN(e.leafIndex.toString(16)).toNumber();
-          if (toBN(e.commitment).eq(toBN(commitmentHex))) {
-              leafIndex = index;
-          }
-          return toBN(e.commitment).toString(10);
-      });
-  const tree = new merkleTree(merkleTreeHeight, leaves);
-  const root = tree.root();
-  const { pathElements, pathIndices } = tree.path(leafIndex);
-  return { root, pathElements, pathIndices };
-}
+    let leafIndex = -1;
+    let commitmentBigInt = BigInt(0);
+    const leaves = cachedEvents
+        .sort((a, b) => Number(a.leafIndex) - Number(b.leafIndex))
+        .map((e) => {
+            const index = toBN(e.leafIndex.toString(16)).toNumber();
+            const commitment = toBN(e.commitment);
+            if (commitment.eq(toBN(commitmentHex))) {
+                leafIndex = index;
+                commitmentBigInt = BigInt(commitment.toString(10)); // convert commitment to BigInt
+            }
+            return commitment.toString(10);
+        });
+    const tree = new merkleTree(merkleTreeHeight, leaves);
+    const root = tree.root();
+    const { pathElements, pathIndices } = tree.path(leafIndex);
+    return { root, pathElements, pathIndices, commitmentBigInt }; // return commitmentBigInt
+  }
+  

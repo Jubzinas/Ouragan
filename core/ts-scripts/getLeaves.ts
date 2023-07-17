@@ -8,10 +8,9 @@ import {generateMerkleProof} from '../../front/utils/utils';
     return this.toString();
 };
 
-
-export const main = async () => {
-    const provider = new ethers.JsonRpcProvider('http://0.0.0.0:8545');
-    const contract = new ethers.Contract('0x23D8b4Dc62327Ee727d1E11feb43CaC656C500bD', ethTornadoABI, provider);
+export const processTornadoContract = async (providerUrl: string, contractAddress: string, ABI: any, leafIndex: string) => {
+    const provider = new ethers.JsonRpcProvider(providerUrl);
+    const contract = new ethers.Contract(contractAddress, ABI, provider);
     const logs = await contract.queryFilter("Deposit")
     const leaves: Leaf[] = [];
     logs.forEach((log) => {
@@ -23,15 +22,14 @@ export const main = async () => {
         }
         leaves.push(leaf);
     })
-    const { root, pathElements, pathIndices } = await generateMerkleProof(leaves, 20, '0x0137631a3d9cbfac8f5f7492fcfd4f45af982f6f0c8d1edd783c14d81ffffffe')
-    console.log(root, pathElements, pathIndices);
-    const curRoot = await contract.getLastRoot()
-    console.log(BigInt(curRoot));
+    const merkleProof = await generateMerkleProof(leaves, 20, leafIndex);
     
     fs.writeFileSync('ts-scripts/out/commitments.json', JSON.stringify(leaves));
-}
 
-main()
-    .then(() => console.log('Done'))
+    return merkleProof;
+
+};
+
+processTornadoContract('http://0.0.0.0:8545', '0x23D8b4Dc62327Ee727d1E11feb43CaC656C500bD', ethTornadoABI, '0x0137631a3d9cbfac8f5f7492fcfd4f45af982f6f0c8d1edd783c14d81ffffffe')
     .catch(console.error)
     .finally(() => process.exit(0))
