@@ -1,2 +1,19 @@
 node_modules
 core/build
+
+core/cache/
+core/out/
+
+# Ignores development broadcast logs
+!core/broadcast
+core/broadcast/*/31337/
+core/broadcast/**/dry-run/
+
+# Docs
+docs/
+
+# Dotenv file
+.env
+
+# Node modules
+node_modules/

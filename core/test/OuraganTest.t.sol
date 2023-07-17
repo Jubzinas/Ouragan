@@ -11,7 +11,7 @@ contract OuraganTest is Test {
     
     ETHTornado tornado;
     Ouragan ouragan;
-    address tornadoAddress = address(0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0);
+    address tornadoAddress = address(0x23D8b4Dc62327Ee727d1E11feb43CaC656C500bD);
 
     function setUp() public {
         tornado = ETHTornado(tornadoAddress); 

@@ -21,7 +21,6 @@ contract Ouragan {
     uint256[] public depositorPubkey;
     uint256[] public withdrawerPubkey;
     uint256[] public encryptedCommitment;
-    uint256 public sharedKeyHash;
     uint256 public nonce;
 
     constructor(address _tornado) {
@@ -33,11 +32,10 @@ contract Ouragan {
         depositorPubkey = _depositorPubkey;
     }
 
-    function order(uint256[] memory _encryptedCommitment, uint256 _sharedKeyHash, uint256[] memory _withdrawerPubkey, uint256 _nonce) public payable {
+    function order(uint256[] memory _encryptedCommitment, uint256[] memory _withdrawerPubkey, uint256 _nonce) public payable {
         require(msg.value == depositPrice, "Ouragan: invalid deposit price");
         encryptedCommitment = _encryptedCommitment;
         withdrawerPubkey = _withdrawerPubkey;
-        sharedKeyHash = _sharedKeyHash;
         nonce = _nonce;
     }
 
