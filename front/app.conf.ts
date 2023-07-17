@@ -2,7 +2,7 @@ import { ouraganABI } from '../core/wagmi-src/generated';
 import { ethTornadoABI } from '../core/wagmi-src/generated';
 
 export const OURAGAN_ADDRESS =
-    '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9';
+    '0xa01094a9397659fc396c35b0a1a7be3bdab98e00';
 export const CHAIN_ID = 31337;
 export const RPC_URL = 'http://localhost:8545';
 export const tornadoContractConfig = {

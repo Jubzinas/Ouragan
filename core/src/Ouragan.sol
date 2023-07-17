@@ -36,14 +36,16 @@ contract Ouragan {
 
     constructor(
         IOuraganVerifier _verifier,
-        address _tornado
+        address _tornado,
+        uint256 _depositAmount
     ) {
         verifier = _verifier;
         tornado = ETHTornado(_tornado);
+        depositAmount = _depositAmount;
     }
 
-    function ask(uint256 _depositAmount, uint256 _depositPrice, uint256[2] memory _depositorPubkey) public {
-        require(_depositPrice <= _depositAmount, "Ouragan: deposit price must be less or equal to deposit amount");
+    function ask(uint256 _depositPrice, uint256[2] memory _depositorPubkey) public {
+        require(_depositPrice <= depositAmount, "Ouragan: deposit price must be less or equal to deposit amount");
         depositorPubkey = _depositorPubkey;
     }
 
