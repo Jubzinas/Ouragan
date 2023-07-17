@@ -16,16 +16,6 @@ export default function Home() {
 
   console.log("Current root: ", root);
   
-  const [mimcSponge, setmimcSponge] = useState();
-
-  useEffect(() => {
-    (async () => {
-      const sponge = await buildMimcSponge();
-      const tree = new IncrementalMerkleTree(sponge.hash.bind(sponge), 20, BigInt(0), 2) // Binary tree.
-      setmimcSponge(sponge);
-
-    })()
-  }, [])
 
   return (
     <Layout>
