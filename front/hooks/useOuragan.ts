@@ -8,12 +8,13 @@ export const useOuragan = () => {
     const { data: depositAmount, error } = useContractRead({
         address: ouraganContractConfig.address,
         abi: ouraganContractConfig.abi,
-        functionName: '',
+        functionName: 'depositAmount',
         chainId: CHAIN_ID,
         cacheTime: 2_000,
     });
-    console.log(error);
     
+    console.log("Amount: ", depositAmount);
+
     return {
         depositAmount,
     }

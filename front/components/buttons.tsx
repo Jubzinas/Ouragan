@@ -1,4 +1,4 @@
-import { CHAIN_ID } from '@/app.conf';
+import { CHAIN_ID, ouraganContractConfig } from '@/app.conf';
 import {
     useAccount,
     useConnect,
@@ -6,6 +6,7 @@ import {
     useSwitchNetwork,
 } from 'wagmi';
 import { InjectedConnector } from 'wagmi/connectors/injected';
+import { useContractWrite } from "wagmi";
 
 export const ConnectWallet: React.FC = () => {
     const { address, isConnected } = useAccount();
@@ -28,7 +29,7 @@ export const ConnectWallet: React.FC = () => {
 
     const clickFn = isConnected
         ? chain?.id == CHAIN_ID
-            ? () => {}
+            ? () => { }
             : () => switchNetwork?.()
         : () => connect({ chainId: CHAIN_ID });
 
@@ -42,3 +43,34 @@ export const ConnectWallet: React.FC = () => {
         </button>
     );
 };
+
+
+interface ActionButtonProps {
+    actionText: string;
+    args: any[];
+    functionName: string;
+}
+
+export const ActionButton: React.FC<ActionButtonProps> = ({ functionName, actionText, args }) => {
+    const { address, isConnected } = useAccount();
+    const { write } = useContractWrite({
+        address: ouraganContractConfig.address,
+        abi: ouraganContractConfig.abi,
+        functionName: functionName,
+    })
+    return (
+        <>
+            {
+                isConnected ?
+                    <></>
+                    :
+                    <button
+                        onClick={() => write({ args: args })}
+                        className="hover:bg-gray-200 border-2 border-[#9f9f9f] white-background py-1 px-4"
+                    >
+                        {actionText}
+                    </button>
+            }
+        </>
+    );
+}

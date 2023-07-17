@@ -1,5 +1,5 @@
 import { ethTornadoABI } from '../wagmi-src/generated';
-import { EventLog, Log, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import fs from "fs";
 
 export const main = async () => {
