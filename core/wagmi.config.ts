@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
       foundry({
           project: '.',
-          include: ['Ouragan.json'],
+          include: ['Ouragan.json', 'ETHTornado.json'],
       }),
   ],
 });

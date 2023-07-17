@@ -5,9 +5,10 @@ core/cache/
 core/out/
 
 # Ignores development broadcast logs
-!core/broadcast
+!core/broadcast/
 core/broadcast/*/31337/
 core/broadcast/**/dry-run/
+core/broadcast/*/11155111/
 
 # Docs
 docs/
@@ -17,3 +18,5 @@ docs/
 
 # Node modules
 node_modules/
+
+core/ts-scripts/out/
