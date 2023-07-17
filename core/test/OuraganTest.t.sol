@@ -3,8 +3,8 @@ pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "forge-std/Test.sol";
-import "src/ETHTornado.sol";
-import "src/Ouragan.sol";
+import "../src/ETHTornado.sol";
+import "../src/Ouragan.sol";
 import "forge-std/console.sol";
 
 contract OuraganTest is Test {

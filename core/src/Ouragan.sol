@@ -13,6 +13,7 @@ pragma solidity ^0.7.0;
 import "./ETHTornado.sol";
 
 contract Ouragan {
+    
     ETHTornado tornado;
     address public depositor;
     uint256 public depositPrice;

@@ -3,7 +3,7 @@
         "editor.defaultFormatter": "JuanBlanco.solidity",
     },
     "solidity.compileUsingRemoteVersion": "v0.7.0",
-    "solidity.packageDefaultDependenciesContractsDirectory": "src",
-    "solidity.packageDefaultDependenciesDirectory": "lib",
-    "solidity.formatter": "forge",
+    "solidity.formatter": "forge",  
+    "solidity.packageDefaultDependenciesContractsDirectory": "core/",
+    "solidity.packageDefaultDependenciesDirectory": "lib"
 }
