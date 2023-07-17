@@ -5,13 +5,10 @@ const wasm_tester = require("circom_tester").wasm;
 const path = require("path");
 const { utilsMarket, utilsCrypto } = require('private-market-utils');
 const { Keypair } = require("maci-domainobjs");
-const crypto = require("crypto");
-const { buildBabyjub, buildPedersenHash } = require("circomlibjs");
-const utils = require("ffjavascript").utils;
-const rbigint = (nbytes) => utils.leBuff2int(crypto.randomBytes(nbytes))
 const { encrypt, decrypt } = require("maci-crypto");
+const generateTornadoDepositNote = require('../../scripts/tornado.js');
 
-describe("Circuit Test", function () {
+describe("Circuit Tests", function () {
 
     let treeCircuit;
     let encryptionVerifierCircuit;
@@ -68,7 +65,7 @@ describe("Circuit Test", function () {
             await treeCircuit.calculateWitness(invalid_input);
         } catch (error) {
             if (error instanceof Error)
-                assert.include(error.message, 'Error in template MerkleTreeInclusionProof_69 line: 39');
+                assert.include(error.message, 'Error in template MerkleTreeInclusionProof_72 line: 39');
         }
     });
 
@@ -87,34 +84,18 @@ describe("Circuit Test", function () {
         assert.deepEqual(sharedKeyBuyer, sharedKeySeller);
     });
 
-    it('Should create a nullifier and secret - hash them and create commitment', async () => {
-
-        // generate user commitment
-        let deposit = {
-            secret: rbigint(31),
-            nullifier: rbigint(31),
-        }
-        const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
-        let babyJub = await buildBabyjub();
-        let pedersen = await buildPedersenHash();
-        const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
-        const commitment = pedersenHash(preimage);
-
-        expect(commitment).to.exist;
+    it('Should create a valid tornado deposit note, namely nullifier, secret, and H(nullifier, secret) == commitment', async () => {
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
+        expect(tcDepositNode.commitment).to.exist;        
+        expect(tcDepositNode.nullifier).to.exist;
+        expect(tcDepositNode.secret).to.exist;
     });
 
     it('Should verify commitment == Dec(Enc(commitment))', async () => {
 
-        // generate user commitment
-        let deposit = {
-            secret: rbigint(31),
-            nullifier: rbigint(31),
-        }
-        const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
-        let babyJub = await buildBabyjub();
-        let pedersen = await buildPedersenHash();
-        const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
-        const commitment = pedersenHash(preimage);
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
 
         // generate shared key
         const sharedKeyBuyer = Keypair.genEcdhSharedKey(
@@ -129,7 +110,7 @@ describe("Circuit Test", function () {
         // encryption
         const poseidonNonce = BigInt(Date.now().toString());
         const encryptedCommitment = encrypt(
-            [commitment],
+            [tcDepositNode.commitment],
             sharedKeySeller,
             poseidonNonce
         )
@@ -141,21 +122,13 @@ describe("Circuit Test", function () {
             poseidonNonce,
             1
         )
-        assert.deepEqual(decriptedCommitment, [commitment]);
+        assert.deepEqual(decriptedCommitment, [tcDepositNode.commitment]);
     });
 
     it("Should generate a valid proof for encryptionVerifierCircuit", async () => {
 
-        // generate user commitment
-        let deposit = {
-            secret: rbigint(31),
-            nullifier: rbigint(31),
-        }
-        const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
-        let babyJub = await buildBabyjub();
-        let pedersen = await buildPedersenHash();
-        const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
-        const commitment = pedersenHash(preimage);
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
 
         // generate shared key
         const sharedKeyBuyer = Keypair.genEcdhSharedKey(
@@ -170,13 +143,13 @@ describe("Circuit Test", function () {
         // encryption
         const poseidonNonce = BigInt(Date.now().toString());
         const encryptedCommitment = encrypt(
-            [commitment],
+            [tcDepositNode.commitment],
             sharedKeySeller,
             poseidonNonce
         )
 
         let input = {
-            "commitment": commitment,
+            "commitment": tcDepositNode.commitment,
             "sharedKey": sharedKeyBuyer,
             "encryptedCommitment": encryptedCommitment,
             "poseidonNonce": poseidonNonce
@@ -189,16 +162,8 @@ describe("Circuit Test", function () {
 
     it("Should generate an invalid proof for encryptionVerifierCircuit", async () => {
 
-        // generate user commitment
-        let deposit = {
-            secret: rbigint(31),
-            nullifier: rbigint(31),
-        }
-        const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
-        let babyJub = await buildBabyjub();
-        let pedersen = await buildPedersenHash();
-        const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
-        const commitment = pedersenHash(preimage);
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
 
         // generate sharedKey
         const sharedKeyBuyer = Keypair.genEcdhSharedKey(
@@ -213,7 +178,7 @@ describe("Circuit Test", function () {
         // encryption
         const poseidonNonce = BigInt(Date.now().toString());
         const encryptedCommitment = encrypt(
-            [commitment],
+            [tcDepositNode.commitment],
             sharedKeySeller,
             poseidonNonce
         )
