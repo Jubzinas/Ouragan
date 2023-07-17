@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "postinstall": "rm node_modules/.bin"
+    "postinstall": "rm node_modules/.bin/circom"
   },
   "workspaces": [
     "core/"
