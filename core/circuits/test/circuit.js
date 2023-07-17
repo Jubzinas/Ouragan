@@ -10,8 +10,6 @@ const generateTornadoDepositNote = require('../../scripts/tornado.js');
 
 describe("Circuit Tests", function () {
 
-    let treeCircuit;
-    let encryptionVerifierCircuit;
     let merkleTreeProof;
     let buyer;
     let seller;
@@ -19,11 +17,8 @@ describe("Circuit Tests", function () {
     this.timeout(10000000);
 
     before(async () => {
-        treeCircuit = await wasm_tester(path.join(__dirname, "../src", "tree.circom"));
-        encryptionVerifierCircuit = await wasm_tester(path.join(__dirname, "../src", 'encryptionVerifier.circom'));
-
         // Build tree
-        const tree = new IncrementalMerkleTree(poseidon2, 32, BigInt(0), 2) // Binary tree.
+        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
         tree.insert(BigInt(1));
         const index = tree.indexOf(BigInt(1));
         merkleTreeProof = tree.createProof(index);
@@ -35,38 +30,6 @@ describe("Circuit Tests", function () {
         seller = new utilsMarket.User(
             utilsCrypto.getRandomECDSAPrivKey(false)
         );
-    });
-
-    it("Should generate a valid proof for merkle tree circuit", async () => {
-
-        let input = {
-            "leaf": merkleTreeProof.leaf,
-            "pathIndices": merkleTreeProof.pathIndices,
-            "siblings": merkleTreeProof.siblings,
-            "root": merkleTreeProof.root
-        };
-
-        let witness = await treeCircuit.calculateWitness(input);
-
-        await treeCircuit.checkConstraints(witness);
-    });
-
-    it("Should generate an invalid proof for merkle tree circuit", async () => {
-
-        let invalid_input = {
-            "leaf": merkleTreeProof.leaf + 1n,
-            "pathIndices": merkleTreeProof.pathIndices,
-            "siblings": merkleTreeProof.siblings,
-            "root": merkleTreeProof.root
-        };
-
-        // the input root should not match the root generated from the circuit.
-        try {
-            await treeCircuit.calculateWitness(invalid_input);
-        } catch (error) {
-            if (error instanceof Error)
-                assert.include(error.message, 'Error in template MerkleTreeInclusionProof_72 line: 39');
-        }
     });
 
     it('Should calculate the same ECDH shared key for both buyer and seller', () => {
@@ -127,6 +90,8 @@ describe("Circuit Tests", function () {
 
     it("Should generate a valid proof for encryptionVerifierCircuit", async () => {
 
+        let encryptionVerifierCircuit = await wasm_tester(path.join(__dirname, "./circuits", 'encryptionVerifier.circom'));
+
         // generate tornado cash deposit note
         const tcDepositNode = await generateTornadoDepositNote();
 
@@ -147,7 +112,7 @@ describe("Circuit Tests", function () {
             sharedKeySeller,
             poseidonNonce
         )
-
+        
         let input = {
             "commitment": tcDepositNode.commitment,
             "sharedKey": sharedKeyBuyer,
@@ -161,6 +126,8 @@ describe("Circuit Tests", function () {
     });
 
     it("Should generate an invalid proof for encryptionVerifierCircuit", async () => {
+
+        let encryptionVerifierCircuit = await wasm_tester(path.join(__dirname, "./circuits", 'encryptionVerifier.circom'));
 
         // generate tornado cash deposit note
         const tcDepositNode = await generateTornadoDepositNote();
@@ -198,4 +165,187 @@ describe("Circuit Tests", function () {
                 assert.include(error.message, 'Error in template EncryptionVerifier_75 line: 26');
         }
     });
+
+    it("Should generate a valid proof for ouragan Circuit", async () => {
+
+        let ouraganCircuit = await wasm_tester(path.join(__dirname, "./circuits", 'ouragan.circom'));
+
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
+
+        // create tornado cash merkle tree and add commitment to it
+        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        tree.insert(tcDepositNode.commitment);
+        const indexCommitment = tree.indexOf(tcDepositNode.commitment);
+        merkleTreeProof = tree.createProof(indexCommitment);
+
+        // generate shared key 
+        const sharedKey = Keypair.genEcdhSharedKey(
+            buyer.privJubJubKey,
+            seller.pubJubJubKey
+        );
+
+        // encryption
+        const poseidonNonce = BigInt(Date.now().toString());
+        const encryptedCommitment = encrypt(
+            [tcDepositNode.commitment],
+            sharedKey,
+            poseidonNonce
+        )
+
+        let input = {
+            "pathIndices": merkleTreeProof.pathIndices,
+            "siblings": merkleTreeProof.siblings,
+            "root": merkleTreeProof.root,
+            "commitment": tcDepositNode.commitment,
+            "sharedKey": sharedKey,
+            "encryptedCommitment": encryptedCommitment,
+            "poseidonNonce": poseidonNonce
+        };
+
+        let witness = await ouraganCircuit.calculateWitness(input);
+
+        await ouraganCircuit.checkConstraints(witness);
+
+    });
+
+    it("Should generate an invalid proof for ouragan Circuit if we modify the poseidon nonce", async () => {
+
+        let ouraganCircuit = await wasm_tester(path.join(__dirname, "./circuits", 'ouragan.circom'));
+
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
+
+        // create tornado cash merkle tree and add commitment to it
+        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        tree.insert(tcDepositNode.commitment);
+        const indexCommitment = tree.indexOf(tcDepositNode.commitment);
+        merkleTreeProof = tree.createProof(indexCommitment);
+
+        // generate shared key 
+        const sharedKey = Keypair.genEcdhSharedKey(
+            buyer.privJubJubKey,
+            seller.pubJubJubKey
+        );
+
+        // encryption
+        const poseidonNonce = BigInt(Date.now().toString());
+        const encryptedCommitment = encrypt(
+            [tcDepositNode.commitment],
+            sharedKey,
+            poseidonNonce
+        )
+
+        let invalidInput = {
+            "pathIndices": merkleTreeProof.pathIndices,
+            "siblings": merkleTreeProof.siblings,
+            "root": merkleTreeProof.root,
+            "commitment": tcDepositNode.commitment,
+            "sharedKey": sharedKey,
+            "encryptedCommitment": encryptedCommitment,
+            "poseidonNonce": poseidonNonce + 1n
+        };
+
+        try {
+            await ouraganCircuit.calculateWitness(invalidInput);
+        } catch (error) {
+            if (error instanceof Error)
+                assert.include(error.message, 'Ouragan_146 line: 38'); 
+        }
+    });
+
+    it("Should generate an invalid encryption for ouragan Circuit if we modify the encryption key", async () => {
+
+        let ouraganCircuit = await wasm_tester(path.join(__dirname, "./circuits", 'ouragan.circom'));
+
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
+
+        // create tornado cash merkle tree and add commitment to it
+        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        tree.insert(tcDepositNode.commitment);
+        const indexCommitment = tree.indexOf(tcDepositNode.commitment);
+        merkleTreeProof = tree.createProof(indexCommitment);
+
+        // generate shared key 
+        const sharedKey = Keypair.genEcdhSharedKey(
+            buyer.privJubJubKey,
+            seller.pubJubJubKey
+        );
+
+        // encryption
+        const poseidonNonce = BigInt(Date.now().toString());
+        const encryptedCommitment = encrypt(
+            [tcDepositNode.commitment],
+            sharedKey,
+            poseidonNonce
+        )
+
+        let invalidSharedKey = [sharedKey[0] + 1n, sharedKey[1] + 1n];
+
+        let invalidInput = {
+            "pathIndices": merkleTreeProof.pathIndices,
+            "siblings": merkleTreeProof.siblings,
+            "root": merkleTreeProof.root,
+            "commitment": tcDepositNode.commitment,
+            "sharedKey": invalidSharedKey,
+            "encryptedCommitment": encryptedCommitment,
+            "poseidonNonce": poseidonNonce
+        };
+
+        try {
+            await ouraganCircuit.calculateWitness(invalidInput);
+        } catch (error) {
+            if (error instanceof Error)
+                assert.include(error.message, 'Ouragan_146 line: 38'); 
+        }
+    });
+
+    it("Should generate an invalid proof for ouragan Circuit if we modify the commitment", async () => {
+
+        let ouraganCircuit = await wasm_tester(path.join(__dirname, "./circuits", 'ouragan.circom'));
+
+        // generate tornado cash deposit note
+        const tcDepositNode = await generateTornadoDepositNote();
+
+        // create tornado cash merkle tree and add commitment to it
+        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        tree.insert(tcDepositNode.commitment);
+        const indexCommitment = tree.indexOf(tcDepositNode.commitment);
+        merkleTreeProof = tree.createProof(indexCommitment);
+
+        // generate shared key 
+        const sharedKey = Keypair.genEcdhSharedKey(
+            buyer.privJubJubKey,
+            seller.pubJubJubKey
+        );
+
+        // encryption
+        const poseidonNonce = BigInt(Date.now().toString());
+        const encryptedCommitment = encrypt(
+            [tcDepositNode.commitment],
+            sharedKey,
+            poseidonNonce
+        )
+
+        let invalidInput = {
+            "pathIndices": merkleTreeProof.pathIndices,
+            "siblings": merkleTreeProof.siblings,
+            "root": merkleTreeProof.root,
+            "commitment": tcDepositNode.commitment + 1n,
+            "sharedKey": sharedKey,
+            "encryptedCommitment": encryptedCommitment,
+            "poseidonNonce": poseidonNonce
+        };
+        
+        // It should generate an error on the merkle tree because it checks the inclusion first
+        try {
+            await ouraganCircuit.calculateWitness(invalidInput);
+        } catch (error) {
+            if (error instanceof Error)
+                assert.include(error.message, 'Ouragan_146 line: 28'); 
+        }
+    });
+
 });
+

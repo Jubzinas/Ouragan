@@ -14,7 +14,7 @@ template EncryptionVerifier() {
       Check correctness of encryption, encrypted commitment == poseidonEncryption(commitment, sharedKey, poseidonNonce)
     */
     component poseidonEncryptCheck = PoseidonEncryptCheck(1);
-
+    
     poseidonEncryptCheck.nonce <== poseidonNonce;
     for(i=0; i<4; i++) {
         poseidonEncryptCheck.ciphertext[i] <== encryptedCommitment[i];
@@ -27,4 +27,3 @@ template EncryptionVerifier() {
     
 }
 
-component main = EncryptionVerifier(); 
