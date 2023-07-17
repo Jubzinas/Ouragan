@@ -10,7 +10,16 @@
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
+
 import "./ETHTornado.sol";
+
+interface IOuraganVerifier {
+    function verifyProof(uint[2] memory a,
+            uint[2][2] memory b,
+            uint[2] memory c,
+            uint[6] memory input)
+        external view returns(bool);
+}
 
 contract Ouragan {
     
@@ -23,11 +32,17 @@ contract Ouragan {
     uint256[] public encryptedCommitment;
     uint256 public nonce;
 
-    constructor(address _tornado) {
+    IOuraganVerifier verifier;
+
+    constructor(
+        IOuraganVerifier _verifier,
+        address _tornado
+    ) {
+        verifier = _verifier;
         tornado = ETHTornado(_tornado);
     }
 
-    function ask(uint256 _depositAmount, uint256 _depositPrice, uint256[] memory _depositorPubkey) public {
+    function ask(uint256 _depositAmount, uint256 _depositPrice, uint256[2] memory _depositorPubkey) public {
         require(_depositPrice <= _depositAmount, "Ouragan: deposit price must be less or equal to deposit amount");
         depositorPubkey = _depositorPubkey;
     }
@@ -39,20 +54,32 @@ contract Ouragan {
         nonce = _nonce;
     }
 
-    function fill(uint256[] memory proof, uint256[] memory publicSignals) public {
-        bytes32 _root = bytes32(publicSignals[1]);
-        uint256 _nonce = uint256(publicSignals[2]);
-        
+    function fill(
+        uint[2] memory a,
+        uint[2][2] memory b,
+        uint[2] memory c,
+        uint[6] memory publicSignals
+    ) public {
+        bytes32 _root = bytes32(publicSignals[0]);
+        uint256 _nonce = uint256(publicSignals[5]);
+
         require(isKnownRoot(_root), "Tornado: invalid root");
+        require(publicSignals[1] == encryptedCommitment[0], "Ouragan: invalid encrypted commitment");
+        require(publicSignals[2] == encryptedCommitment[1], "Ouragan: invalid encrypted commitment");
+        require(publicSignals[3] == encryptedCommitment[2], "Ouragan: invalid encrypted commitment");
+        require(publicSignals[4] == encryptedCommitment[3], "Ouragan: invalid encrypted commitment");
         require(_nonce == nonce, "Ouragan: invalid nonce");
         
-        // check that the encrypted commitment is correct
+        require(
+            verifier.verifyProof(a, b, c, publicSignals),
+            "Ouragan: invalid proof"
+        );
 
-        require(true, "Ouragan: invalid proof");
         payable(msg.sender).transfer(depositPrice);
     }
 
     function isKnownRoot(bytes32 _root) public view returns (bool) {
         return tornado.isKnownRoot(_root);
     }
+
 }
