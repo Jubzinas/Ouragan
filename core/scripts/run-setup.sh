@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-PTAU_NAME="powersOfTau28_hez_final_13.ptau"
+PTAU_NAME="powersOfTau28_hez_final_15.ptau"
 
 compile_and_ts() {
     CIRCUIT_PATH="$1"

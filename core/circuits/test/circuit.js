@@ -1,12 +1,12 @@
 const { expect, assert } = require("chai");
 const { IncrementalMerkleTree } = require("@zk-kit/incremental-merkle-tree");
-const { poseidon2 } = require("poseidon-lite/poseidon2");
 const wasm_tester = require("circom_tester").wasm;
 const path = require("path");
 const { utilsMarket, utilsCrypto } = require('private-market-utils');
 const { Keypair } = require("maci-domainobjs");
 const { encrypt, decrypt } = require("maci-crypto");
 const generateTornadoDepositNote = require('../../scripts/tornado.js');
+const MimcSponge = require("../../scripts/mimcSponge.js");
 
 describe("Circuit Tests", function () {
 
@@ -17,8 +17,10 @@ describe("Circuit Tests", function () {
     this.timeout(10000000);
 
     before(async () => {
-        // Build tree
-        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+
+        const mimcSponge = new MimcSponge();
+        await mimcSponge.prepare();
+        const tree = new IncrementalMerkleTree(mimcSponge.hash.bind(mimcSponge), 20, BigInt(0), 2) // Binary tree.
         tree.insert(BigInt(1));
         const index = tree.indexOf(BigInt(1));
         merkleTreeProof = tree.createProof(index);
@@ -157,6 +159,8 @@ describe("Circuit Tests", function () {
             "poseidonNonce": poseidonNonce
         };
 
+        
+
         // the bool constraint at the end of the circuit is not satisfied
         try {
             await encryptionVerifierCircuit.calculateWitness(invalid_input);
@@ -174,7 +178,9 @@ describe("Circuit Tests", function () {
         const tcDepositNode = await generateTornadoDepositNote();
 
         // create tornado cash merkle tree and add commitment to it
-        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        const mimcSponge = new MimcSponge();
+        await mimcSponge.prepare();
+        const tree = new IncrementalMerkleTree(mimcSponge.hash.bind(mimcSponge), 20, BigInt(0), 2) // Binary tree.
         tree.insert(tcDepositNode.commitment);
         const indexCommitment = tree.indexOf(tcDepositNode.commitment);
         merkleTreeProof = tree.createProof(indexCommitment);
@@ -217,7 +223,9 @@ describe("Circuit Tests", function () {
         const tcDepositNode = await generateTornadoDepositNote();
 
         // create tornado cash merkle tree and add commitment to it
-        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        const mimcSponge = new MimcSponge();
+        await mimcSponge.prepare();
+        const tree = new IncrementalMerkleTree(mimcSponge.hash.bind(mimcSponge), 20, BigInt(0), 2) // Binary tree.
         tree.insert(tcDepositNode.commitment);
         const indexCommitment = tree.indexOf(tcDepositNode.commitment);
         merkleTreeProof = tree.createProof(indexCommitment);
@@ -250,7 +258,7 @@ describe("Circuit Tests", function () {
             await ouraganCircuit.calculateWitness(invalidInput);
         } catch (error) {
             if (error instanceof Error)
-                assert.include(error.message, 'Ouragan_146 line: 38'); 
+                assert.include(error.message, 'Ouragan_81 line: 39'); 
         }
     });
 
@@ -262,7 +270,9 @@ describe("Circuit Tests", function () {
         const tcDepositNode = await generateTornadoDepositNote();
 
         // create tornado cash merkle tree and add commitment to it
-        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        const mimcSponge = new MimcSponge();
+        await mimcSponge.prepare();
+        const tree = new IncrementalMerkleTree(mimcSponge.hash.bind(mimcSponge), 20, BigInt(0), 2) // Binary tree.
         tree.insert(tcDepositNode.commitment);
         const indexCommitment = tree.indexOf(tcDepositNode.commitment);
         merkleTreeProof = tree.createProof(indexCommitment);
@@ -297,7 +307,7 @@ describe("Circuit Tests", function () {
             await ouraganCircuit.calculateWitness(invalidInput);
         } catch (error) {
             if (error instanceof Error)
-                assert.include(error.message, 'Ouragan_146 line: 38'); 
+                assert.include(error.message, 'Ouragan_81 line: 39'); 
         }
     });
 
@@ -309,7 +319,9 @@ describe("Circuit Tests", function () {
         const tcDepositNode = await generateTornadoDepositNote();
 
         // create tornado cash merkle tree and add commitment to it
-        const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2) // Binary tree.
+        const mimcSponge = new MimcSponge();
+        await mimcSponge.prepare();
+        const tree = new IncrementalMerkleTree(mimcSponge.hash.bind(mimcSponge), 20, BigInt(0), 2) // Binary tree.
         tree.insert(tcDepositNode.commitment);
         const indexCommitment = tree.indexOf(tcDepositNode.commitment);
         merkleTreeProof = tree.createProof(indexCommitment);
@@ -338,12 +350,11 @@ describe("Circuit Tests", function () {
             "poseidonNonce": poseidonNonce
         };
         
-        // It should generate an error on the merkle tree because it checks the inclusion first
         try {
             await ouraganCircuit.calculateWitness(invalidInput);
         } catch (error) {
             if (error instanceof Error)
-                assert.include(error.message, 'Ouragan_146 line: 28'); 
+                assert.include(error.message, 'Ouragan_81 line: 29'); 
         }
     });
 
