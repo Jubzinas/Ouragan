@@ -14,7 +14,7 @@ import "./ETHTornado.sol";
 
 contract Ouragan {
     
-    ETHTornado tornado;
+    ETHTornado public tornado;
     address public depositor;
     uint256 public depositPrice;
     uint256 public depositAmount;
