@@ -1,8 +1,9 @@
 import { ouraganABI } from '../core/wagmi-src/generated';
 import { ethTornadoABI } from '../core/wagmi-src/generated';
+import { transactions as localDeploy } from "../core/broadcast/DeployOuragan.s.sol/11155111/run-latest.json";
 
-export const OURAGAN_ADDRESS =
-    '0xa01094a9397659fc396c35b0a1a7be3bdab98e00';
+export const OURAGAN_ADDRESS = localDeploy[0].contractAddress;
+
 export const CHAIN_ID = 31337;
 export const RPC_URL = 'http://localhost:8545';
 export const tornadoContractConfig = {

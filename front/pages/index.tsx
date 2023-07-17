@@ -5,21 +5,23 @@ import { useOuragan } from '@/hooks/useOuragan'
 import { useTornadoLeaves } from '@/hooks/useTornadoLeaves'
 import { useEffect, useState } from 'react'
 import { User } from "../utils/lib/browser"
-const { IncrementalMerkleTree } = require("@zk-kit/incremental-merkle-tree");
+import { IncrementalMerkleTree } from "@zk-kit/incremental-merkle-tree";
 const { buildBabyjub, buildMimcSponge } = require('circomlibjs');
 
 export default function Home() {
 
   const leaves = useTornadoLeaves();
   const [user, setUser] = useState(new User(BigInt(123)));
-  const { depositAmount } = useOuragan();
+  const { depositAmount, root } = useOuragan();
 
+  console.log("Current root: ", root);
   
   const [mimcSponge, setmimcSponge] = useState();
 
   useEffect(() => {
     (async () => {
       const sponge = await buildMimcSponge();
+      const tree = new IncrementalMerkleTree(sponge.hash.bind(sponge), 20, BigInt(0), 2) // Binary tree.
       setmimcSponge(sponge);
 
     })()

@@ -85,4 +85,7 @@ contract Ouragan {
         return tornado.isKnownRoot(_root);
     }
 
+    function currentRoot() public view returns (bytes32) {
+        return tornado.getLastRoot();
+    }
 }

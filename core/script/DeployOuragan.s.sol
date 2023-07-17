@@ -7,7 +7,7 @@ import "../src/Ouragan.sol";
 import "../src/OuraganVerifier.sol";
 
 contract DeployOuragan is Script {
-    ETHTornado tornado = ETHTornado(0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0);
+    ETHTornado tornado = ETHTornado(0x23D8b4Dc62327Ee727d1E11feb43CaC656C500bD);
     address ouraganVerifierAddress = address(new Verifier());
     IOuraganVerifier ouraganVerifierInterface = IOuraganVerifier(ouraganVerifierAddress);
     uint256 depositAmount = 1 ether;
