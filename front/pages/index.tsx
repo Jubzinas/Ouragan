@@ -3,12 +3,14 @@ import { Layout } from '@/components/layout'
 import { Art } from '@/components/misc/art'
 import { useOuragan } from '@/hooks/useOuragan'
 import { useTornadoLeaves } from '@/hooks/useTornadoLeaves'
+import { useState } from 'react'
+import { User } from "../utils/lib/browser"
+const { IncrementalMerkleTree } = require("@zk-kit/incremental-merkle-tree");
 
 export default function Home() {
 
   const leaves = useTornadoLeaves();
-  console.log(leaves);
-  
+  const [user, setUser] = useState(new User(BigInt(123)));
   const { depositAmount } = useOuragan();
 
   return (
@@ -20,7 +22,7 @@ export default function Home() {
         <ConnectWallet />
       </div>
       <div className='py-5'>
-        <ActionButton actionText='Ask' args={[depositAmount]} functionName='ask' />
+        <ActionButton actionText='Ask' args={[]} functionName='ask' />
       </div>
       <div className='py-5'>
         <ActionButton actionText='Order' args={[depositAmount]} functionName='order' />
