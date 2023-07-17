@@ -6,17 +6,18 @@ Requires `circom 2.1.6`
 
 Install the packages
 ```
-npm install
+$ npm install
 ```
 
-For running the whole script run
+For running the whole script run:
+
 ```
-npm start
+$ cd && core npm start
 ```
 
 For testing the circuits run
 ```
-npm run test-circuits
+$ cd core && npm run test-circuits
 ```
 
 
