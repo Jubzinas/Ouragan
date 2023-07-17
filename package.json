@@ -5,9 +5,10 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "postinstall": "rm node_modules/.bin/circom"
+    "postinstall": "rm node_modules/.bin/circom 2> /dev/null || true"
   },
   "workspaces": [
-    "core/"
+    "core/",
+    "front/"
   ]
 }
