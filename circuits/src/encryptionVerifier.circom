@@ -12,7 +12,7 @@ template EncryptionVerifier() {
     var i;
     /* 
       Check correctness of encryption, encrypted commitment == poseidonEncryption(commitment, sharedKey, poseidonNonce)
-      */
+    */
     component poseidonEncryptCheck = PoseidonEncryptCheck(1);
 
     poseidonEncryptCheck.nonce <== poseidonNonce;

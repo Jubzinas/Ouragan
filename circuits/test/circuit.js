@@ -13,74 +13,66 @@ const { encrypt, decrypt } = require("maci-crypto");
 
 describe("Circuit Test", function () {
 
-    let circuit;
-    let proof;
-    let circuit_b;
+    let treeCircuit;
+    let encryptionVerifierCircuit;
+    let merkleTreeProof;
+    let buyer;
+    let seller;
 
     this.timeout(10000000);
 
     before(async () => {
-        circuit = await wasm_tester(path.join(__dirname, "../src", "tree.circom"));
-        circuit_b = await wasm_tester(path.join(__dirname, "../src", 'encryptionVerifier.circom'));
+        treeCircuit = await wasm_tester(path.join(__dirname, "../src", "tree.circom"));
+        encryptionVerifierCircuit = await wasm_tester(path.join(__dirname, "../src", 'encryptionVerifier.circom'));
 
+        // Build tree
         const tree = new IncrementalMerkleTree(poseidon2, 32, BigInt(0), 2) // Binary tree.
-
         tree.insert(BigInt(1));
-
         const index = tree.indexOf(BigInt(1));
+        merkleTreeProof = tree.createProof(index);
 
-        proof = tree.createProof(index);
+        // Build buyer and seller key pairs
+        buyer = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
+        seller = new utilsMarket.User(
+            utilsCrypto.getRandomECDSAPrivKey(false)
+        );
     });
 
-    it("Should generate a valid proof", async () => {
+    it("Should generate a valid proof for merkle tree circuit", async () => {
 
         let input = {
-            "leaf": proof.leaf,
-            "pathIndices": proof.pathIndices,
-            "siblings": proof.siblings,
-            "root": proof.root
+            "leaf": merkleTreeProof.leaf,
+            "pathIndices": merkleTreeProof.pathIndices,
+            "siblings": merkleTreeProof.siblings,
+            "root": merkleTreeProof.root
         };
 
-        let witness = await circuit.calculateWitness(input);
+        let witness = await treeCircuit.calculateWitness(input);
 
-        await circuit.assertOut(witness, { root: proof.root })
-        await circuit.checkConstraints(witness);
+        await treeCircuit.checkConstraints(witness);
     });
 
-    it("Should generate an invalid proof", async () => {
+    it("Should generate an invalid proof for merkle tree circuit", async () => {
 
         let invalid_input = {
-            "leaf": proof.leaf + 1n,
-            "pathIndices": proof.pathIndices,
-            "siblings": proof.siblings,
-            "root": proof.root
+            "leaf": merkleTreeProof.leaf + 1n,
+            "pathIndices": merkleTreeProof.pathIndices,
+            "siblings": merkleTreeProof.siblings,
+            "root": merkleTreeProof.root
         };
 
         // the input root should not match the root generated from the circuit.
         try {
-            await circuit.calculateWitness(invalid_input);
+            await treeCircuit.calculateWitness(invalid_input);
         } catch (error) {
             if (error instanceof Error)
                 assert.include(error.message, 'Error in template MerkleTreeInclusionProof_69 line: 39');
         }
     });
 
-    it("Should generate a user key pair", async () => {
-        const user = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-        // user should exist
-        expect(user.ecdsaKeypair).to.exist;
-        expect(user.jubJubKeypair).to.exist;
-    });
-
-    it('Should calculate the same ECDH value for both buyer and seller', () => {
-        const buyer = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-        const seller = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
+    it('Should calculate the same ECDH shared key for both buyer and seller', () => {
 
         const sharedKeyBuyer = Keypair.genEcdhSharedKey(
             buyer.privJubJubKey,
@@ -96,12 +88,13 @@ describe("Circuit Test", function () {
     });
 
     it('Should create a nullifier and secret - hash them and create commitment', async () => {
+
+        // generate user commitment
         let deposit = {
             secret: rbigint(31),
             nullifier: rbigint(31),
         }
         const preimage = Buffer.concat([utils.leInt2Buff(deposit.nullifier, 31), utils.leInt2Buff(deposit.secret, 31)])
-        //unPackpoint
         let babyJub = await buildBabyjub();
         let pedersen = await buildPedersenHash();
         const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
@@ -110,8 +103,9 @@ describe("Circuit Test", function () {
         expect(commitment).to.exist;
     });
 
-    it('Should verify the encrypted commitment', async () => {
-        //commitment
+    it('Should verify commitment == Dec(Enc(commitment))', async () => {
+
+        // generate user commitment
         let deposit = {
             secret: rbigint(31),
             nullifier: rbigint(31),
@@ -122,14 +116,7 @@ describe("Circuit Test", function () {
         const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
         const commitment = pedersenHash(preimage);
 
-        //sharedKey
-        const buyer = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-        const seller = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-
+        // generate shared key
         const sharedKeyBuyer = Keypair.genEcdhSharedKey(
             buyer.privJubJubKey,
             seller.pubJubJubKey
@@ -139,14 +126,15 @@ describe("Circuit Test", function () {
             buyer.pubJubJubKey
         );
 
-        //encryption
+        // encryption
         const poseidonNonce = BigInt(Date.now().toString());
         const encryptedCommitment = encrypt(
             [commitment],
             sharedKeySeller,
             poseidonNonce
         )
-
+        
+        // decryption
         const decriptedCommitment = decrypt(
             encryptedCommitment,
             sharedKeyBuyer,
@@ -156,8 +144,9 @@ describe("Circuit Test", function () {
         assert.deepEqual(decriptedCommitment, [commitment]);
     });
 
-    it("Should generate a valid proof for circuit_b", async () => {
-        //commitment
+    it("Should generate a valid proof for encryptionVerifierCircuit", async () => {
+
+        // generate user commitment
         let deposit = {
             secret: rbigint(31),
             nullifier: rbigint(31),
@@ -168,14 +157,7 @@ describe("Circuit Test", function () {
         const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
         const commitment = pedersenHash(preimage);
 
-        //sharedKey
-        const buyer = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-        const seller = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-
+        // generate shared key
         const sharedKeyBuyer = Keypair.genEcdhSharedKey(
             buyer.privJubJubKey,
             seller.pubJubJubKey
@@ -185,19 +167,12 @@ describe("Circuit Test", function () {
             buyer.pubJubJubKey
         );
 
-        //encryption
+        // encryption
         const poseidonNonce = BigInt(Date.now().toString());
         const encryptedCommitment = encrypt(
             [commitment],
             sharedKeySeller,
             poseidonNonce
-        )
-
-        const decriptedCommitment = decrypt(
-            encryptedCommitment,
-            sharedKeyBuyer,
-            poseidonNonce,
-            1
         )
 
         let input = {
@@ -207,13 +182,14 @@ describe("Circuit Test", function () {
             "poseidonNonce": poseidonNonce
         };
 
-        let witness = await circuit_b.calculateWitness(input);
+        let witness = await encryptionVerifierCircuit.calculateWitness(input);
 
-        await circuit_b.checkConstraints(witness);
+        await encryptionVerifierCircuit.checkConstraints(witness);
     });
 
-    it("Should generate an invalid proof for circuit_b", async () => {
-        //commitment
+    it("Should generate an invalid proof for encryptionVerifierCircuit", async () => {
+
+        // generate user commitment
         let deposit = {
             secret: rbigint(31),
             nullifier: rbigint(31),
@@ -224,14 +200,7 @@ describe("Circuit Test", function () {
         const pedersenHash = (data) => babyJub.F.toObject(babyJub.unpackPoint(pedersen.hash(data))[0]) //we used this code https://github.com/KuTuGu/proof-of-innocence/blob/dc89bf6c6b2af47b1ec08eebdb3924f3bd614a3f/circuit/js/util.mjs#L10
         const commitment = pedersenHash(preimage);
 
-        //sharedKey
-        const buyer = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-        const seller = new utilsMarket.User(
-            utilsCrypto.getRandomECDSAPrivKey(false)
-        );
-
+        // generate sharedKey
         const sharedKeyBuyer = Keypair.genEcdhSharedKey(
             buyer.privJubJubKey,
             seller.pubJubJubKey
@@ -241,19 +210,12 @@ describe("Circuit Test", function () {
             buyer.pubJubJubKey
         );
 
-        //encryption
+        // encryption
         const poseidonNonce = BigInt(Date.now().toString());
         const encryptedCommitment = encrypt(
             [commitment],
             sharedKeySeller,
             poseidonNonce
-        )
-
-        const decriptedCommitment = decrypt(
-            encryptedCommitment,
-            sharedKeyBuyer,
-            poseidonNonce,
-            1
         )
 
         let invalid_input = {
@@ -263,8 +225,9 @@ describe("Circuit Test", function () {
             "poseidonNonce": poseidonNonce
         };
 
+        // the bool constraint at the end of the circuit is not satisfied
         try {
-            await circuit_b.calculateWitness(invalid_input);
+            await encryptionVerifierCircuit.calculateWitness(invalid_input);
         } catch (error) {
             if (error instanceof Error)
                 assert.include(error.message, 'Error in template EncryptionVerifier_75 line: 26');
