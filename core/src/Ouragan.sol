@@ -47,10 +47,11 @@ contract Ouragan {
     function ask(uint256 _depositPrice, uint256[2] memory _depositorPubkey) public {
         require(_depositPrice <= depositAmount, "Ouragan: deposit price must be less or equal to deposit amount");
         depositorPubkey = _depositorPubkey;
+        depositPrice = _depositPrice;
     }
 
-    function order(uint256[] memory _encryptedCommitment, uint256[] memory _withdrawerPubkey, uint256 _nonce) public payable {
-        require(msg.value == depositPrice, "Ouragan: invalid deposit price");
+    function order(uint256[4] memory _encryptedCommitment, uint256[2] memory _withdrawerPubkey, uint256 _nonce) public payable {
+        require(msg.value == depositPrice, "Ouragan: value to be sent must be equal to deposit price");
         encryptedCommitment = _encryptedCommitment;
         withdrawerPubkey = _withdrawerPubkey;
         nonce = _nonce;
