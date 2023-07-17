@@ -1,11 +1,12 @@
 # Ouragan
 
+Requires `circom 2.1.6` 
+
 ### Usage
 
 Install the packages
 ```
 npm install
-rm node_modules/.bin/circom
 ```
 
 For running the whole script run

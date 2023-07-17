@@ -1,0 +1,13 @@
+{
+  "name": "ouragan-monorepo",
+  "version": "1.0.0",
+  "author": "enrico, giorgio, pierre",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "postinstall": "rm node_modules/.bin"
+  },
+  "workspaces": [
+    "core/"
+  ]
+}
