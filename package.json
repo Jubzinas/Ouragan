@@ -8,6 +8,7 @@
     "test": "test"
   },
   "scripts": {
+    "start": "ts-node ts-scripts/index.ts",
     "test-circuits": "mocha circuits/test/circuit.js"
   },
   "repository": {

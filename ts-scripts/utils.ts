@@ -1,0 +1,1 @@
+// Add support function for scripts
