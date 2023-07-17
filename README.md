@@ -13,12 +13,6 @@ Install the packages
 $ npm install
 ```
 
-For running the whole script run:
-
-```
-$ cd && core npm start
-```
-
 For testing the circuits run
 ```
 $ cd core && npm run test-circuits
