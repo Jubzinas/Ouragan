@@ -4,7 +4,10 @@
 
 # Ouragan
 
-Requires `circom 2.1.6` 
+Requires 
+- `circom 2.1.6` 
+- `forge 0.2.0`
+- Sepolia RPC API
 
 ### Usage
 
@@ -15,31 +18,41 @@ $ npm install
 
 For testing the circuits run
 ```
-$ cd core && npm run test-circuits
+$ cd core 
+$ npm run test-circuits
 ```
+
+(all the next commands should be run from the `core` folder)
 
 For testing the full flow with the smart contract interaction
 
 ```
-forge test --fork-url https://sepolia.infura.io/v3/<your_rpc_api>
+forge test --fork-url <your_sepolia_rpc_api>
 ```
 
 To run the circuit setup
 ```
-$ cd core && bash scripts/run-setup.sh circuits/test/circuits/ouragan.circom
+$ bash scripts/run-setup.sh circuits/test/circuits/ouragan.circom
 ```
 
-To get the input.json file for the proof generation
+To get the input.json file for the proof generation (note: you need to run in parallel a local fork of sepolia network)
+
+- Add a private key to `core/.env` file
+- Run in paraller a local fork of sepolia network
 
 ```
-$ anvil --fork-url https://sepolia.infura.io/v3/<your_rpc_api>
-$ cd core
+$ anvil --fork-url <your_sepolia_rpc_api>
+```
+
+- Generate the input.json file
+
+```
 $ forge script script/TornadoMultipleDeposit.s.sol --rpc-url http://localhost:8545 --broadcast
 $ npx ts-node ts-scripts/getCircuitInput.ts
 ```
 
 To generate the proof
 ```
-$ cd code && bash scripts/generate-proof.sh ouragan ts-scripts/out/input.json
+$ bash scripts/generate-proof.sh ouragan ts-scripts/out/input.json
 ```
 
