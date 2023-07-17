@@ -24,4 +24,14 @@ For testing the circuits run
 $ cd core && npm run test-circuits
 ```
 
+To run the circuit setup
+```
+$ cd core && bash scripts/run-setup.sh circuits/test/circuits/ouragan.circom
+```
+
+To generate the proof
+
+```
+$ cd code && bash scripts/generate-proof.sh ouragan examples/input.json
+```
 
