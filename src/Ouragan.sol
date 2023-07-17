@@ -14,23 +14,46 @@ import "./ETHTornado.sol";
 
 contract Ouragan {
     ETHTornado tornado;
-    address depositor;
-    uint256 depositPrice;
-    uint256 depositAmount;
-    uint256[] depositorPubkey;
-    uint256[] withdrawerPubkey;
+    address public depositor;
+    uint256 public depositPrice;
+    uint256 public depositAmount;
+    uint256[] public depositorPubkey;
+    uint256[] public withdrawerPubkey;
+    uint256[] public encryptedCommitment;
+    uint256 public sharedKeyHash;
+    uint256 public nonce;
 
-    constructor(address _tornado) public {
+    constructor(address _tornado) {
         tornado = ETHTornado(_tornado);
     }
 
-    function ask(uint256 _depositAmount, uint256 _depositPrice, uint256 _depositorPubkey) public {
+    function ask(uint256 _depositAmount, uint256 _depositPrice, uint256[] memory _depositorPubkey) public {
         require(_depositPrice <= _depositAmount, "Ouragan: deposit price must be less or equal to deposit amount");
+        depositorPubkey = _depositorPubkey;
+    }
+
+    function order(uint256[] memory _encryptedCommitment, uint256 _sharedKeyHash, uint256[] memory _withdrawerPubkey, uint256 _nonce) public payable {
+        require(msg.value == depositPrice, "Ouragan: invalid deposit price");
+        encryptedCommitment = _encryptedCommitment;
+        withdrawerPubkey = _withdrawerPubkey;
+        sharedKeyHash = _sharedKeyHash;
+        nonce = _nonce;
     }
 
     function fill(uint256[] memory proof, uint256[] memory publicSignals) public {
-        bytes32 root = bytes32(publicSignals[1]);
-        require(tornado.isKnownRoot(root), "Tornado: invalid root");
+        bytes32 _root = bytes32(publicSignals[1]);
+        uint256 _nonce = uint256(publicSignals[2]);
+        
+        require(isKnownRoot(_root), "Tornado: invalid root");
+        require(_nonce == nonce, "Ouragan: invalid nonce");
+        
+        // check that the encrypted commitment is correct
+
         require(true, "Ouragan: invalid proof");
+        payable(msg.sender).transfer(depositPrice);
+    }
+
+    function isKnownRoot(bytes32 _root) public view returns (bool) {
+        return tornado.isKnownRoot(_root);
     }
 }
