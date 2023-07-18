@@ -62,14 +62,14 @@ export const ActionButton: React.FC<ActionButtonProps> = ({ functionName, action
         <>
             {
                 isConnected ?
-                    <></>
-                    :
                     <button
                         onClick={() => write({ args: args })}
                         className="hover:bg-gray-200 border-2 border-[#9f9f9f] white-background py-1 px-4"
                     >
                         {actionText}
                     </button>
+                    :
+                    <></>
             }
         </>
     );

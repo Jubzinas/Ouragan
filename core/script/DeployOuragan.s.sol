@@ -10,7 +10,7 @@ contract DeployOuragan is Script {
     ETHTornado tornado = ETHTornado(0x23D8b4Dc62327Ee727d1E11feb43CaC656C500bD);
     address ouraganVerifierAddress = address(new Verifier());
     IOuraganVerifier ouraganVerifierInterface = IOuraganVerifier(ouraganVerifierAddress);
-    uint256 depositAmount = 1 ether;
+    uint256 depositAmount = 0.01 ether;
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");

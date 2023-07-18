@@ -2,11 +2,11 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import { WagmiConfig, configureChains, createConfig, sepolia } from 'wagmi';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
-import { RPC_URL } from '@/app.conf';
+import { RPC_URL, CHAIN_ID } from '@/app.conf';
 import { foundry } from 'wagmi/chains';
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [foundry, sepolia],
+  [sepolia, sepolia],
   [
     jsonRpcProvider({
       rpc: (chain) => ({

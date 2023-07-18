@@ -6,6 +6,7 @@ import { useTornadoLeaves } from '@/hooks/useTornadoLeaves'
 import { useEffect, useState } from 'react'
 import { User } from "../utils/lib/browser"
 import { generateMerkleProof } from '@/utils/utils'
+import { formatEther, parseEther } from 'viem';
 
 export default function Home() {
 
@@ -32,7 +33,7 @@ export default function Home() {
         <ConnectWallet />
       </div>
       <div className='py-5'>
-        <ActionButton actionText='Ask' args={[]} functionName='ask' />
+        <ActionButton actionText='Ask' args={[parseEther("0.01"), [BigInt(1), BigInt(2)]]} functionName='ask' />
       </div>
       <div className='py-5'>
         <ActionButton actionText='Order' args={[depositAmount]} functionName='order' />
