@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "postinstall": "rm node_modules/.bin/circom 2> /dev/null || true",
-    "test:contracts": "cd core && forge build && forge test --deny-warnings --fork-url https://sepolia.infura.io/v3/43f0351332fb4475a9cfed0886a71bc2",
+    "test:contracts": "cd core && forge build --use solc:0.7.0 && forge test --deny-warnings --fork-url https://sepolia.infura.io/v3/43f0351332fb4475a9cfed0886a71bc2",
     "test:circuits": "cd core && npm run test:circuits",
     "ouragan:tests": "npm run test:contracts && npm run test:circuits"
   },
