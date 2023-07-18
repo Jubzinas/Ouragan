@@ -3,7 +3,7 @@
 </p>
 
 
-![](https://img.shields.io/badge/circom-2.0.3-lightgrey) ![](https://img.shields.io/badge/forge-0.2.0-blue) 
+![](https://img.shields.io/badge/circom-2.1.6-lightgrey) ![](https://img.shields.io/badge/forge-0.2.0-blue) 
 
 # Ouragan
 
