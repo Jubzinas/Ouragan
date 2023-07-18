@@ -8,8 +8,9 @@
     "test": "test"
   },
   "scripts": {
+    "postinstall": "rm node_modules/.bin/circom 2> /dev/null || true",
     "start": "ts-node ts-scripts/index.ts",
-    "test-circuits": "mocha circuits/test/circuit.js"
+    "test:circuits": "npm run postinstall && mocha circuits/test/circuit.js"
   },
   "repository": {
     "type": "git",
@@ -20,7 +21,7 @@
     "tornado-cash",
     "foundry"
   ],
-  "author": "Enrico Bottazzi - Pierre DM - Giorgio",
+  "author": "Enrico, Giorgio, Pierre",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Jubzinas/Ouragan/issues"
