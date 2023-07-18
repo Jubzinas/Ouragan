@@ -18,14 +18,14 @@ contract OuraganTest is Test, Shared {
     uint256 depositAmount = 1 ether;
 
     function setUp() public {
-        vm.deal(seller, 1 ether);
-        vm.deal(buyer, 1 ether);
+        vm.deal(seller, 10 ether);
+        vm.deal(buyer, 10 ether);
         tornado = ETHTornado(tornadoAddress);
         IOuraganVerifier ouraganVerifierInterface = IOuraganVerifier(ouraganVerifierAddress);
         ouragan = new Ouragan(ouraganVerifierInterface, tornadoAddress, depositAmount);
     }
 
-    function testValidRoot() public {
+    function testValidRoot() public view {
         bytes32 lastRoot = tornado.getLastRoot();
         tornado.isKnownRoot(lastRoot);
     }
