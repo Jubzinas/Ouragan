@@ -87,15 +87,16 @@ describe('Tornado Cash Contract Interaction', function () {
     // sellet executes a deposit to the tornado contract of 1 eth using the commitment shared by the buyer
     const value = '1000000000000000000';
 
-    const leaf: Leaf = {
-      commitment: toFixedHex(tcDepositNote.commitment),
-      leafIndex: BigInt(0),
-    };
+    const commitment = toFixedHex(tcDepositNote.commitment);
 
     const signer = await ethers.provider.getSigner(0);
 
-    await tornado.deposit(leaf.commitment, { value, from: signer.address });
+    await tornado.deposit(commitment, { value, from: signer.address });
 
+    const leaf: Leaf = {
+      commitment,
+      leafIndex: BigInt(0),
+    };
     // fetch merkle proof for the commitment from the tornado contract.
     // For now there's only one leaf in the contract
     const tcMerkleProof: TornadoMerkleProof = await generateTornadoMerkleProof([leaf], leaf.commitment);
@@ -111,8 +112,49 @@ describe('Tornado Cash Contract Interaction', function () {
     await ouraganCircuit.checkConstraints(witness);
   });
 
-  // Add: test should fail for wrong encryption
-  // Add: test should fail for wrong merkle proof
+  it('Seller should not be able to generate a valid proof of deposit to tornado if using another commitment', async function () {
+    const seller = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+    const buyer = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+    const sharedKey = seller.generateSharedKeyWith(buyer.user);
+
+    // buyer generates a deposit note and shares only the commitment with the seller
+    const tcDepositNote = await generateTornadoDepositNote();
+
+    // deploy tornado cash contract
+    const tornado = await deployTornadoCashContract();
+
+    // sellet executes a deposit to the tornado contract of 1 eth using the commitment shared by the buyer
+    const value = '1000000000000000000';
+
+    const invalidCommitment = toFixedHex(42);
+
+    const signer = await ethers.provider.getSigner(0);
+
+    await tornado.deposit(invalidCommitment, { value, from: signer.address });
+
+    const leaf: Leaf = {
+      commitment: invalidCommitment,
+      leafIndex: BigInt(0),
+    };
+
+    // fetch merkle proof for the commitment from the tornado contract.
+    // For now there's only one leaf in the contract
+    const tcMerkleProof: TornadoMerkleProof = await generateTornadoMerkleProof([leaf], leaf.commitment);
+
+    // generate circuits inputs
+    const input = await getCircuitInputs(sharedKey, tcDepositNote, tcMerkleProof);
+
+    let ouraganCircuit = await wasm_tester(path.join(__dirname, './circuits', 'ouragan.circom'));
+
+    try {
+      await ouraganCircuit.calculateWitness(input);
+    } catch (error) {
+      if (error instanceof Error) assert.include(error.message, 'Ouragan_81 line: 39');
+    }
+  });
+
+  it('Seller should not be able to generate a valid proof of deposit to tornado if fetches a wrong merkle proof', async function () {});
+
   // Add: test to actually send the proof to the tornado contract
   // Add: Ouragan tests
 });
