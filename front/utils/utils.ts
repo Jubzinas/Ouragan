@@ -2,7 +2,7 @@
 const { toBN } = require('web3-utils');
 //@ts-ignore
 const merkleTree = require('fixed-merkle-tree');
-import { Leaf } from "../../core/ts-scripts/utils";
+import { Leaf } from "../../core/src/tornadoUtils";
 
 export async function generateMerkleProof(cachedEvents: Leaf[], merkleTreeHeight: number, commitmentHex: string) {
     let leafIndex = -1;
@@ -21,6 +21,6 @@ export async function generateMerkleProof(cachedEvents: Leaf[], merkleTreeHeight
     const tree = new merkleTree(merkleTreeHeight, leaves);
     const root = tree.root();
     const { pathElements, pathIndices } = tree.path(leafIndex);
-    return { root, pathElements, pathIndices, commitmentBigInt }; // return commitmentBigInt
+    return { root, pathElements, pathIndices, commitmentBigInt };
   }
   

@@ -9,7 +9,7 @@ pragma circom 2.0.2;
 
 include "poseidon_constants.circom";
 include "CalculateTotal.circom";
-include "../../../node_modules/circomlib/circuits/comparators.circom";
+include "../../node_modules/circomlib/circuits/comparators.circom";
 
 template Sigma() {
     signal input in;

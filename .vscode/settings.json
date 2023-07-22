@@ -1,9 +1,0 @@
-{
-    "[solidity]": {
-        "editor.defaultFormatter": "JuanBlanco.solidity",
-    },
-    "solidity.compileUsingRemoteVersion": "v0.7.0",
-    "solidity.formatter": "forge",  
-    "solidity.packageDefaultDependenciesContractsDirectory": "core/",
-    "solidity.packageDefaultDependenciesDirectory": "lib"
-}

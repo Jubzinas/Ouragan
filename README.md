@@ -2,7 +2,6 @@
 <img width="185" alt="ouragan" src="https://github.com/Jubzinas/Ouragan/assets/23149200/7621f927-2c2d-47c7-a665-93d6536b9472">
 </p>
 
-
 ![](https://img.shields.io/badge/circom-2.1.6-lightgrey) ![](https://img.shields.io/badge/forge-0.2.0-blue) 
 
 # Ouragan
@@ -20,16 +19,18 @@ This is an interesting setup for a number of reasons:
 
 ![](./imgs/ouragan.jpeg)
 
-### Setup
+### Main Components
+
+- `core`: Contains the circuits and contracts that make up the core of the protocol.
+- `front`: Contains a simple frontend implementation of the protocol. (WIP)
 
 Install the packages and run all tests:
 
 ```
+$ cd core
 $ npm install 
-$ npm run ouragan:tests
+$ npm test
 ```
-
-We deployed our own Tornado Cash [instance](https://sepolia.etherscan.io/address/0x23d8b4dc62327ee727d1e11feb43cac656c500bd) on Sepolia. Tests will run against a Sepolia fork to emulate real-world conditions.
 
 ### Architecture Limitations
 
@@ -37,12 +38,10 @@ We deployed our own Tornado Cash [instance](https://sepolia.etherscan.io/address
 - The protocol doesn't work if Alice has already deposited into Tornado Cash. Ideally the protocol should work retroactively.
 - We would like to be able to do 1 TC deposit to seed N addresses. Might be possible to update TC protocol and leverage recursivity. One TC deposit note could be used for seeding N wallets.
 
-### Implementation TODOs
+### TODOs
 
 - [ ] Add timelock to Ouragan contract. As of now Bob's funds are locked into the contract until Alice provides a valid proof. Ideally, the funds should be released back to Bob after a certain amount of time.
 - [ ] Test integration with withdraw function on tornado cash. 
 - [ ] Enforce a check that the deposit amount related to `_tornado` contract used in the constructor matches the `_depositAmount` passed in the constructor.
 - [ ] Extend it to ERC20 Pools
-
-
-
+- [ ] Publish package to npm

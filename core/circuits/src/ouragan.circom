@@ -2,7 +2,7 @@ pragma circom 2.1.6;
 
 include "./encryptionVerifier.circom";
 include "./tree.circom";
-include "../../../node_modules/circomlib/circuits/mux1.circom";
+include "../../node_modules/circomlib/circuits/mux1.circom";
 
 template Ouragan() {
 
