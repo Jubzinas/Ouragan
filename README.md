@@ -18,7 +18,7 @@ This is an interesting setup for a number of reasons:
 - Alice might not want her wallet to interact with Tornado Cash when withdrawing funds
 - Bob gets a premium for providing Alice the ability to seed her wallet
 
-![](./imgs/ouragan.jpeg)
+![](./imgs/Ouragan_updated.jpeg)
 
 ### Setup
 
