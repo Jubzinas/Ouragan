@@ -81,10 +81,12 @@ describe('Tornado Cash Contract Interaction', function () {
     // buyer generates a deposit note and shares only the commitment with the seller
     const tcDepositNote = await generateTornadoDepositNote();
 
+    const buyer_commitment = tcDepositNote.commitment;
+
     // deploy tornado cash contract
     const tornado = await deployTornadoCashContract();
 
-    // sellet executes a deposit to the tornado contract of 1 eth using the commitment shared by the buyer
+    // seller executes a deposit to the tornado contract of 1 eth using the commitment shared by the buyer
     const value = '1000000000000000000';
 
     const commitment = toFixedHex(tcDepositNote.commitment);
@@ -101,8 +103,9 @@ describe('Tornado Cash Contract Interaction', function () {
     // For now there's only one leaf in the contract
     const tcMerkleProof: TornadoMerkleProof = await generateTornadoMerkleProof([leaf], leaf.commitment);
 
-    // generate circuits inputs
-    const input = await getCircuitInputs(sharedKey, tcDepositNote, tcMerkleProof);
+    // generate circuits inputs. The seller is trying to prove that the he deposited to the Tornado Cash Contract 
+    // using the commitment shared by the buyer. The circuit should pass.
+    const input = await getCircuitInputs(sharedKey, buyer_commitment, tcMerkleProof);
 
     let ouraganCircuit = await wasm_tester(path.join(__dirname, './circuits', 'ouragan.circom'));
 
@@ -120,10 +123,12 @@ describe('Tornado Cash Contract Interaction', function () {
     // buyer generates a deposit note and shares only the commitment with the seller
     const tcDepositNote = await generateTornadoDepositNote();
 
+    const buyer_commitment = tcDepositNote.commitment;
+
     // deploy tornado cash contract
     const tornado = await deployTornadoCashContract();
 
-    // sellet executes a deposit to the tornado contract of 1 eth using the commitment shared by the buyer
+    // seller executes a deposit to the tornado contract of 1 eth a commitment different from the one shared by the buyer
     const value = '1000000000000000000';
 
     const invalidCommitment = toFixedHex(42);
@@ -132,6 +137,7 @@ describe('Tornado Cash Contract Interaction', function () {
 
     await tornado.deposit(invalidCommitment, { value, from: signer.address });
 
+    // This is the leaf that was added to the Tornado Cash Tree in the Smart Contract
     const leaf: Leaf = {
       commitment: invalidCommitment,
       leafIndex: BigInt(0),
@@ -141,8 +147,9 @@ describe('Tornado Cash Contract Interaction', function () {
     // For now there's only one leaf in the contract
     const tcMerkleProof: TornadoMerkleProof = await generateTornadoMerkleProof([leaf], leaf.commitment);
 
-    // generate circuits inputs
-    const input = await getCircuitInputs(sharedKey, tcDepositNote, tcMerkleProof);
+    // generate circuits inputs. The seller is trying to prove that the he deposited to the Tornado Cash Contract 
+    // using the commitment shared by the buyer, but he actually used another commitment. The circuit should fail
+    const input = await getCircuitInputs(sharedKey, buyer_commitment, tcMerkleProof);
 
     let ouraganCircuit = await wasm_tester(path.join(__dirname, './circuits', 'ouragan.circom'));
 

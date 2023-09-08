@@ -14,10 +14,10 @@ export type OuraganCircuitInput = {
 
 export async function getCircuitInputs(
   sharedKey: EcdhSharedKey,
-  tcDepositNote: TornadoDeposit,
+  buyer_commitment: bigint,
   merkleTreeProof: TornadoMerkleProof,
 ): Promise<OuraganCircuitInput> {
-  const encryptedCommitment: EncryptedCommitment = encryptCommitment(tcDepositNote.commitment, sharedKey);
+  const encryptedCommitment: EncryptedCommitment = encryptCommitment(buyer_commitment, sharedKey);
 
   return {
     pathIndices: merkleTreeProof.pathIndices,
