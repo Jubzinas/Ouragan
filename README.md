@@ -6,7 +6,7 @@
 
 # Ouragan
 
-*A LambdaZKWeek project*
+*A LambdaZKWeek project - 3rd place 🥂*
 
 Ouragan is a permissionless and censorship resistant Tornado Cash offramp. 
 
