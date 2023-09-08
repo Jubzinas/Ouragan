@@ -32,6 +32,15 @@ $ npm install
 $ npm test
 ```
 
+### Setup
+
+The Circuit Verifier contract has been deployed using a test trusted setup. If you want to run the trusted setup yourself, you can do so: 
+
+```
+$ npm run setup
+```
+
+
 ### Architecture Limitations
 
 - Bob knows Alice’s seeded address. In particular Bob can correlate the address that Alice used to deposit funds in Tornado Cash at step 3 with the address that got seeded at step 5.
