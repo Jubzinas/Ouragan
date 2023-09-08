@@ -42,9 +42,8 @@ abstract contract Tornado is MerkleTreeWithHistory, ReentrancyGuard {
     IHasher _hasher,
     uint256 _denomination,
     uint32 _merkleTreeHeight
-  ) MerkleTreeWithHistory(_merkleTreeHeight, _hasher) payable {
+  ) MerkleTreeWithHistory(_merkleTreeHeight, _hasher) {
     require(_denomination > 0, "denomination should be greater than 0");
-    require(_denomination == msg.value, "denomination should be equal to the amount deposited");
     verifier = _verifier;
     denomination = _denomination;
   }
