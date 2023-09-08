@@ -42,8 +42,9 @@ abstract contract Tornado is MerkleTreeWithHistory, ReentrancyGuard {
     IHasher _hasher,
     uint256 _denomination,
     uint32 _merkleTreeHeight
-  ) MerkleTreeWithHistory(_merkleTreeHeight, _hasher) {
+  ) MerkleTreeWithHistory(_merkleTreeHeight, _hasher) payable {
     require(_denomination > 0, "denomination should be greater than 0");
+    require(_denomination == msg.value, "denomination should be equal to the amount deposited");
     verifier = _verifier;
     denomination = _denomination;
   }
@@ -114,7 +115,7 @@ abstract contract Tornado is MerkleTreeWithHistory, ReentrancyGuard {
   /** @dev whether an array of notes is already spent */
   function isSpentArray(bytes32[] calldata _nullifierHashes) external view returns (bool[] memory spent) {
     spent = new bool[](_nullifierHashes.length);
-    for (uint256 i = 0; i < _nullifierHashes.length; i++) {
+    for (uint256 i; i < _nullifierHashes.length; i++) {
       if (isSpent(_nullifierHashes[i])) {
         spent[i] = true;
       }
