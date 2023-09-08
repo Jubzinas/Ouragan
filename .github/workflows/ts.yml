@@ -29,16 +29,16 @@ jobs:
           ${{ runner.OS }}-node-
 
     - name: Install Dependencies
-      run: 
-      cd core
-      npm install
+      run: |
+        cd core
+        npm install
 
     - name: Build
-      run: 
-      cd core
-      npm run build
+      run: |
+        cd core
+        npm run build
 
     - name: Run tests
-      run: 
-      cd core
-      npm test
+      run: |
+        cd core
+        npm test
