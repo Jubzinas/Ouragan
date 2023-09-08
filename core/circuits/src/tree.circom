@@ -1,7 +1,9 @@
 // From https://github.com/tornadocash/tornado-core/blob/master/circuits/merkleTree.circom
-include "../../../node_modules/circomlib/circuits/mimcsponge.circom";
+include "../../node_modules/circomlib/circuits/mimcsponge.circom";
 
-// Computes MiMC([left, right])
+/*
+    Computes MiMC([left, right])
+*/
 template HashLeftRight() {
     signal input left;
     signal input right;
@@ -13,9 +15,10 @@ template HashLeftRight() {
     hasher.k <== 0;
     hash <== hasher.outs[0];
 }
-
-// if s == 0 returns [in[0], in[1]]
-// if s == 1 returns [in[1], in[0]]
+/*
+    if s == 0 returns [in[0], in[1]]
+    if s == 1 returns [in[1], in[0]]
+*/
 template DualMux() {
     signal input in[2];
     signal input s;
@@ -26,8 +29,22 @@ template DualMux() {
     out[1] <== (in[0] - in[1])*s + in[1];
 }
 
-// Verifies that merkle proof is correct for given merkle root and a leaf
-// pathIndices input is an array of 0/1 selectors telling whether given pathElement is on the left or right side of merkle path
+/*
+    Inputs:
+    ---------
+    - leaf: leaf that we want to prove inclusion in a merkle tree
+    - root: root of the merkle tree
+    - pathElements[levels]: sibling elements on the merkle path
+    - pathIndices[levels]: binary selector that indicates whether given element in pathElements is on the left or right side of merkle path
+
+    Parameters:
+    ------------
+    - levels: number of levels in the merkle tree
+
+    Functionality:
+    --------------
+    1. Verifies that the leaf is in the merkle tree with the given root 
+*/
 template MerkleTreeChecker(levels) {
     signal input leaf;
     signal input root;

@@ -2,6 +2,18 @@ pragma circom 2.1.6;
 
 include "../lib/poseidon.circom";
 
+/*
+    Inputs:
+    ---------
+    - commitment : commitment that the seller claims to have added to the Tornado Cash Merkle Tree
+    - sharedKey[2] : DH shared key between the seller and the buyer
+    - encryptedCommitment[4]: Poseidon encryption of the commitment with the shared key and a nonce
+    - poseidonNonce: nonce used in the Poseidon encryption
+
+    Functionality:
+    --------------
+    1. Enforce correctness of encryption, encryptedCommitment == poseidonEncryption(commitment, sharedKey, poseidonNonce)
+*/
 template EncryptionVerifier() {
 
     signal input commitment;
@@ -10,9 +22,7 @@ template EncryptionVerifier() {
     signal input poseidonNonce;
 
     var i;
-    /* 
-      Check correctness of encryption, encrypted commitment == poseidonEncryption(commitment, sharedKey, poseidonNonce)
-    */
+
     component poseidonEncryptCheck = PoseidonEncryptCheck(1);
     
     poseidonEncryptCheck.nonce <== poseidonNonce;
