@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Ouragan core library",
   "scripts": {
+    "postinstall": "rm node_modules/.bin/circom 2> /dev/null || true",
     "test": "npx hardhat test",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
