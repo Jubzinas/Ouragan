@@ -152,9 +152,4 @@ describe('Tornado Cash Contract Interaction', function () {
       if (error instanceof Error) assert.include(error.message, 'Ouragan_81 line: 39');
     }
   });
-
-  it('Seller should not be able to generate a valid proof of deposit to tornado if fetches a wrong merkle proof', async function () {});
-
-  // Add: test to actually send the proof to the tornado contract
-  // Add: Ouragan tests
 });
