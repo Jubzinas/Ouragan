@@ -54,7 +54,7 @@ describe('Poseidon Encryption Class Test', () => {
   });
 });
 
-describe('Tornado Cash Contract Interaction', function () {
+describe('Circuit Proof + Tornado Cash Contract Interaction Test', function () {
   async function deployTornadoCashContract() {
     const Verifier = await ethers.getContractFactory('Verifier');
     const verifier = await Verifier.deploy();
@@ -156,7 +156,53 @@ describe('Tornado Cash Contract Interaction', function () {
     try {
       await ouraganCircuit.calculateWitness(input);
     } catch (error) {
-      if (error instanceof Error) assert.include(error.message, 'Ouragan_81 line: 39');
+      if (error instanceof Error) assert.include(error.message, 'Ouragan_81 line: 55');
     }
   });
+});
+
+describe('Ouragan Contract', () => {
+  async function deployOuragan() {
+    const Verifier = await ethers.getContractFactory('Verifier');
+    const verifier = await Verifier.deploy();
+
+    const data = fs.readFileSync('./contracts/hasher.json', 'utf8');
+    const contractData = JSON.parse(data);
+
+    const Hasher = await ethers.getContractFactory(contractData.abi, contractData.bytecode);
+    const hasher = await Hasher.deploy();
+
+    const denomination = '1000000000000000000'; // 1 ETH, for instance
+    const merkleTreeHeight = 20; // An example value
+
+    const Tornado = await ethers.getContractFactory('ETHTornado');
+    const tornado = await Tornado.deploy(verifier.target, hasher.target, denomination, merkleTreeHeight);
+
+    const OuraganVerifier = await ethers.getContractFactory('OuraganVerifier');
+    const ouraganVerifier = await OuraganVerifier.deploy();
+
+    const Ouragan = await ethers.getContractFactory('Ouragan');
+    const ouragan = await Ouragan.deploy(ouraganVerifier.target, tornado.target, denomination);
+
+    return { tornado, ouragan };
+  }
+
+  it('Should deploy the Ouragan Contract Correctly', async () => {
+    const { tornado, ouragan } = await deployOuragan();
+    assert.ok(tornado);
+    assert.ok(ouragan);
+  });
+
+  it('Should accept a valid Ask', async () => {
+    const { tornado, ouragan } = await deployOuragan();
+
+    const seller = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+
+    const depositPrice = '800000000000000000'; // 0.8 ETH
+
+    const depositPubKey = seller.user.pubJubJubKey.rawPubKey;
+
+    await ouragan.ask(depositPrice, depositPubKey);
+  });
+
 });
