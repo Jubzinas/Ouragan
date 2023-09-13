@@ -32,6 +32,16 @@ describe('Ouragan User Class Tests', () => {
     const sharedKey2 = user2.generateSharedKeyWith(user1.user);
     assert.equal(sharedKey1.toString(), sharedKey2.toString());
   });
+
+  it('should generate the same hash of the shared key', () => {
+    const user1 = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+    const user2 = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+    const sharedKey1 = user1.generateSharedKeyWith(user2.user);
+    const sharedKey2 = user2.generateSharedKeyWith(user1.user);
+    const sharedKeyHash1 = user1.generateSharedKeyHash(sharedKey1);
+    const sharedKeyHash2 = user2.generateSharedKeyHash(sharedKey2);
+    assert.equal(sharedKeyHash1.toString(), sharedKeyHash2.toString());
+  });
 });
 
 describe('Poseidon Encryption Class Test', () => {
@@ -114,7 +124,7 @@ describe('Tornado Cash Contract Interaction', function () {
     let witness = await ouraganCircuit.calculateWitness(input);
             
     // Evaluate witness to output sharedKeyHash is equal to the poseidon hash of the shared key
-    const expectedSharedKeyHash = poseidon2([sharedKey[0].toString(), sharedKey[1].toString()])
+    const expectedSharedKeyHash = seller.generateSharedKeyHash(sharedKey);
 
     await ouraganCircuit.assertOut(witness, {sharedKeyHash: expectedSharedKeyHash})
 
