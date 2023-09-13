@@ -17,7 +17,7 @@ interface IOuraganVerifier {
     function verifyProof(uint[2] memory a,
             uint[2][2] memory b,
             uint[2] memory c,
-            uint[6] memory input)
+            uint[7] memory input)
         external view returns(bool);
 }
 
@@ -31,6 +31,7 @@ contract Ouragan {
     uint256[] public withdrawerPubkey;
     uint256[] public encryptedCommitment;
     uint256 public nonce;
+    uint256 public sharedKeyHash;
 
     IOuraganVerifier verifier;
 
@@ -50,21 +51,23 @@ contract Ouragan {
         depositPrice = _depositPrice;
     }
 
-    function order(uint256[4] memory _encryptedCommitment, uint256[2] memory _withdrawerPubkey, uint256 _nonce) public payable {
+    function order(uint256[4] memory _encryptedCommitment, uint256[2] memory _withdrawerPubkey, uint256 _nonce, uint256 _sharedKeyHash) public payable {
         require(msg.value == depositPrice, "Ouragan: value to be sent must be equal to deposit price");
         encryptedCommitment = _encryptedCommitment;
         withdrawerPubkey = _withdrawerPubkey;
         nonce = _nonce;
+        sharedKeyHash = _sharedKeyHash;
     }
 
     function fill(
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
-        uint[6] memory publicSignals
+        uint[7] memory publicSignals
     ) public {
         bytes32 _root = bytes32(publicSignals[0]);
         uint256 _nonce = uint256(publicSignals[5]);
+        uint256 _sharedKeyHash = uint256(publicSignals[6]);
 
         require(isKnownRoot(_root), "Tornado: invalid root");
         require(publicSignals[1] == encryptedCommitment[0], "Ouragan: invalid encrypted commitment");
@@ -72,6 +75,7 @@ contract Ouragan {
         require(publicSignals[3] == encryptedCommitment[2], "Ouragan: invalid encrypted commitment");
         require(publicSignals[4] == encryptedCommitment[3], "Ouragan: invalid encrypted commitment");
         require(_nonce == nonce, "Ouragan: invalid nonce");
+        require(_sharedKeyHash == sharedKeyHash, "Ouragan: invalid shared key hash");
         
         require(
             verifier.verifyProof(a, b, c, publicSignals),

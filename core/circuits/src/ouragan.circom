@@ -15,10 +15,15 @@ include "../../node_modules/circomlib/circuits/mux1.circom";
   - encryptedCommitment[4]: Poseidon encryption of the commitment with the shared key and a nonce
   - poseidonNonce: nonce used in the Poseidon encryption
 
+  Output:
+  ---------
+  - sharedKeyHash: poseidon hash of the shared key
+
   Functionality:
   --------------
   1. Check that the commitment is in the merkle tree 
   2. Check that the encryptedCommitment = Enc(commitment, sharedKey)
+  3. Perform a poseidon hash of the shared key and return it
 */
 template Ouragan() {
 
@@ -29,6 +34,8 @@ template Ouragan() {
     signal input sharedKey[2]; // private
     signal input encryptedCommitment[4]; // public
     signal input poseidonNonce; // public 
+
+    signal output sharedKeyHash; // public
 
     var i;
 
@@ -54,6 +61,15 @@ template Ouragan() {
     for(i=0; i<4; i++) {
         encryptionVerifier.encryptedCommitment[i] <== encryptedCommitment[i];
     }
+
+    /* 
+      3.
+    */
+    component poseidonHasher = Poseidon(2);
+    poseidonHasher.inputs[0] <== sharedKey[0];
+    poseidonHasher.inputs[1] <== sharedKey[1];
+
+    sharedKeyHash <== poseidonHasher.out;
 
 }
 

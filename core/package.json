@@ -8,7 +8,7 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
-    "setup" : "bash scripts/run-setup.sh test/circuits/ouragan.circom"
+    "setup": "bash scripts/run-setup.sh test/circuits/ouragan.circom"
   },
   "repository": {
     "type": "git",
@@ -40,6 +40,7 @@
     "fixed-merkle-tree": "^0.6.1",
     "maci-crypto": "^1.1.2",
     "maci-domainobjs": "^1.1.2",
+    "poseidon-lite": "^0.2.0",
     "private-market-utils": "^0.0.4"
   }
 }

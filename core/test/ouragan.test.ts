@@ -5,6 +5,7 @@ import { encryptCommitment, decryptCommitment } from '../src/poseidonEncryption'
 import { generateTornadoMerkleProof } from '../src/tornadoUtils';
 import { getCircuitInputs } from '../src/circuitUtils';
 import { assert } from 'chai';
+import { poseidon2 } from "poseidon-lite/poseidon2"
 import * as circom_tester from 'circom_tester';
 const wasm_tester = circom_tester.wasm;
 const path = require('path');
@@ -111,6 +112,11 @@ describe('Tornado Cash Contract Interaction', function () {
 
     // check if witness is valid
     let witness = await ouraganCircuit.calculateWitness(input);
+            
+    // Evaluate witness to output sharedKeyHash is equal to the poseidon hash of the shared key
+    const expectedSharedKeyHash = poseidon2([sharedKey[0].toString(), sharedKey[1].toString()])
+
+    await ouraganCircuit.assertOut(witness, {sharedKeyHash: expectedSharedKeyHash})
 
     await ouraganCircuit.checkConstraints(witness);
   });
@@ -156,7 +162,7 @@ describe('Tornado Cash Contract Interaction', function () {
     try {
       await ouraganCircuit.calculateWitness(input);
     } catch (error) {
-      if (error instanceof Error) assert.include(error.message, 'Ouragan_81 line: 39');
+      if (error instanceof Error) assert.include(error.message, 'Ouragan_149 line: 62');
     }
   });
 });
