@@ -5,8 +5,13 @@ export type EncryptedCommitment = {
   nonce: bigint;
 };
 
-export function encryptCommitment(commitment: bigint, sharedKey: EcdhSharedKey): EncryptedCommitment {
+export function encryptCommitment(commitment: bigint | string, sharedKey: EcdhSharedKey): EncryptedCommitment {
   const poseidonNonce = BigInt(Date.now().toString());
+
+  if (typeof commitment === 'string') {
+    commitment = BigInt(commitment);
+  }
+
   const encryptedData = encrypt([commitment], sharedKey, poseidonNonce);
   return {
     encryptedData,

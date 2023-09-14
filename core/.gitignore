@@ -10,5 +10,3 @@ typechain-types
 cache
 artifacts
 
-# Circom files 
-/build

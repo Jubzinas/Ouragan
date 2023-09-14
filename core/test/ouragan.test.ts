@@ -4,7 +4,7 @@ import { utilsCrypto } from 'private-market-utils';
 import { encryptCommitment, decryptCommitment } from '../src/poseidonEncryption';
 import { generateTornadoMerkleProof } from '../src/tornadoUtils';
 import { getCircuitInputs } from '../src/circuitUtils';
-import { assert } from 'chai';
+import { assert, expect} from 'chai';
 import * as circom_tester from 'circom_tester';
 const wasm_tester = circom_tester.wasm;
 const path = require('path');
@@ -200,9 +200,105 @@ describe('Ouragan Contract', () => {
 
     const depositPrice = '800000000000000000'; // 0.8 ETH
 
-    const depositPubKey = seller.user.pubJubJubKey.rawPubKey;
+    const depositorPubKey = seller.user.pubJubJubKey.rawPubKey;
 
-    await ouragan.ask(depositPrice, depositPubKey);
+    await ouragan.ask(depositPrice, depositorPubKey);
+
+    const depositPriceFromContract = await ouragan.depositPrice();
+
+    expect(depositPriceFromContract.toString()).to.equal(depositPrice);
+
+    const depositorPubKeyXFromContract = await ouragan.depositorPubkey(0);
+    const depositorPubKeyYFromContract = await ouragan.depositorPubkey(1);
+
+    expect(depositorPubKeyXFromContract.toString()).to.equal(depositorPubKey[0].toString());
+    expect(depositorPubKeyYFromContract.toString()).to.equal(depositorPubKey[1].toString());
   });
 
+  it('Should refuse an Ask with a deposit price greater than the deposit amount', async () => {
+    const { tornado, ouragan } = await deployOuragan();
+
+    const seller = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+
+    const depositPrice = '1100000000000000000'; // 1.1 ETH
+
+    const depositorPubKey = seller.user.pubJubJubKey.rawPubKey;
+
+    await expect(ouragan.ask(depositPrice, depositorPubKey)).to.be.revertedWith('Ouragan: deposit price must be less or equal to deposit amount');
+  });
+
+  it('Should accept a valid Order', async () => {
+    const { tornado, ouragan } = await deployOuragan();
+
+    const seller = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+
+    const depositPrice = '800000000000000000'; // 0.8 ETH
+
+    const depositorPubKey = seller.user.pubJubJubKey.rawPubKey;
+
+    await ouragan.ask(depositPrice, depositorPubKey);
+
+    const buyer = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false)); // Buyer generates a new keypair
+
+    const buyerPubKey = buyer.user.pubJubJubKey.rawPubKey;
+
+    const sharedKey = buyer.generateSharedKeyWith(seller.user); // Buyer generates a shared key with the seller
+
+    const deposit = await generateTornadoDepositNote(); // Buyer generates a deposit note
+
+    const encryptedCommitment = encryptCommitment(deposit.commitment, sharedKey); // Buyer encrypts the commitment with the shared key
+
+    // Buyer performs the order 
+    await ouragan.order(encryptedCommitment.encryptedData, buyer.user.pubJubJubKey.rawPubKey, encryptedCommitment.nonce,
+    {
+      value: depositPrice
+    });
+
+    const encryptedCommitmentFromContract0 = await ouragan.encryptedCommitment(0);
+    const encryptedCommitmentFromContract1 = await ouragan.encryptedCommitment(1);
+    const encryptedCommitmentFromContract2 = await ouragan.encryptedCommitment(2);
+    const encryptedCommitmentFromContract3 = await ouragan.encryptedCommitment(3);
+
+    expect(encryptedCommitmentFromContract0.toString()).to.equal(encryptedCommitment.encryptedData[0].toString());
+    expect(encryptedCommitmentFromContract1.toString()).to.equal(encryptedCommitment.encryptedData[1].toString());
+    expect(encryptedCommitmentFromContract2.toString()).to.equal(encryptedCommitment.encryptedData[2].toString());
+    expect(encryptedCommitmentFromContract3.toString()).to.equal(encryptedCommitment.encryptedData[3].toString());
+
+    const nonceFromContract = await ouragan.nonce();
+    expect (nonceFromContract.toString()).to.equal(encryptedCommitment.nonce.toString());
+
+    const buyerPubKeyXFromContract = await ouragan.withdrawerPubkey(0);
+    const buyerPubKeyYFromContract = await ouragan.withdrawerPubkey(1);
+
+    expect(buyerPubKeyXFromContract.toString()).to.equal(buyerPubKey[0].toString());
+    expect(buyerPubKeyYFromContract.toString()).to.equal(buyerPubKey[1].toString());
+
+  });
+
+  it('Should refuse an Order with a value attached that is different from the deposit price', async () => {
+    const { tornado, ouragan } = await deployOuragan();
+
+    const seller = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+
+    const depositPrice = '800000000000000000'; // 0.8 ETH
+
+    const depositorPubKey = seller.user.pubJubJubKey.rawPubKey;
+
+    await ouragan.ask(depositPrice, depositorPubKey);
+
+    const buyer = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false)); // Buyer generates a new keypair
+
+    const sharedKey = buyer.generateSharedKeyWith(seller.user); // Buyer generates a shared key with the seller
+
+    const deposit = await generateTornadoDepositNote(); // Buyer generates a deposit note
+
+    const encryptedCommitment = encryptCommitment(deposit.commitment, sharedKey); // Buyer encrypts the commitment with the shared key
+
+    const invalidPrice = '700000000000000000'; // 0.7 ETH
+
+    await expect(ouragan.order(encryptedCommitment.encryptedData, buyer.user.pubJubJubKey.rawPubKey, encryptedCommitment.nonce,
+      {
+        value: invalidPrice
+      })).to.be.revertedWith('Ouragan: value to be sent must be equal to deposit price');
+  });
 });
