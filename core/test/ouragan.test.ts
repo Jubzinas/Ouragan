@@ -3,11 +3,12 @@ import { TornadoMerkleProof, generateTornadoDepositNote, toFixedHex } from '../s
 import { utilsCrypto } from 'private-market-utils';
 import { encryptCommitment, decryptCommitment } from '../src/poseidonEncryption';
 import { generateTornadoMerkleProof } from '../src/tornadoUtils';
-import { getCircuitInputs } from '../src/circuitUtils';
+import { getCircuitInputs, generateWitness, convertProofToSolidityCalldata} from '../src/circuitUtils';
 import { assert, expect} from 'chai';
 import * as circom_tester from 'circom_tester';
 const wasm_tester = circom_tester.wasm;
 const path = require('path');
+const snarkjs = require('snarkjs');
 import fs from 'fs';
 import { Leaf } from '../src/tornadoUtils';
 
@@ -300,5 +301,71 @@ describe('Ouragan Contract', () => {
       {
         value: invalidPrice
       })).to.be.revertedWith('Ouragan: value to be sent must be equal to deposit price');
+  });
+
+  it('Should complete a full flow', async () => {
+    const { tornado, ouragan } = await deployOuragan();
+
+    const seller = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false));
+
+    const depositPrice = '800000000000000000'; // 0.8 ETH
+
+    const depositorPubKey = seller.user.pubJubJubKey.rawPubKey;
+
+    await ouragan.ask(depositPrice, depositorPubKey); // Seller performs ask
+
+    const buyer = new OuraganUser(utilsCrypto.getRandomECDSAPrivKey(false)); // Buyer generates a new keypair
+
+    const sharedKey = buyer.generateSharedKeyWith(seller.user); // Buyer generates a shared key with the seller
+
+    const tcDepositNote = await generateTornadoDepositNote(); // Buyer generates a deposit note
+
+    const commitment = toFixedHex(tcDepositNote.commitment);
+
+    const encryptedCommitment = encryptCommitment(commitment, sharedKey); // Buyer encrypts the commitment with the shared key
+
+    // Buyer performs the order 
+    await ouragan.order(encryptedCommitment.encryptedData, buyer.user.pubJubJubKey.rawPubKey, encryptedCommitment.nonce,
+    {
+      value: depositPrice
+    });
+
+    // Seller decrypts the commitment
+    const decryptedCommitment = decryptCommitment(encryptedCommitment, sharedKey);
+    
+    const decryptCommitmentToHex = toFixedHex(decryptedCommitment);
+
+    // Seller performs the deposit of 1 ETH to the Tornado Cash Contract using the commitment of the buyer
+    await tornado.deposit(decryptCommitmentToHex, { value: '1000000000000000000' });
+
+    // Seller should now be able to generate a proof that he/she performed a deposit to the Tornado Cash Contract using the commitment of the buyer and withdraw the funds
+    // Time to generate the proof..
+
+    // fetch merkle proof for the commitment from the tornado contract.
+    // For now there's only one leaf in the contract
+    const leaf: Leaf = {
+      commitment: decryptCommitmentToHex,
+      leafIndex: BigInt(0),
+    };
+
+    const tcMerkleProof: TornadoMerkleProof = await generateTornadoMerkleProof([leaf], leaf.commitment);
+
+    const input = await getCircuitInputs(sharedKey, BigInt(decryptCommitmentToHex), tcMerkleProof, encryptedCommitment.nonce);
+
+    // generate witness
+    const witness_path = "build/ouragan/witness.wtns";
+    const wasm_path = "build/ouragan/circuit.wasm";
+
+    await generateWitness(input, witness_path, wasm_path);
+
+    // generate proof
+    const zkey_path = "build/ouragan/circuit_final.zkey";
+    const { proof, publicSignals } = await snarkjs.groth16.prove(zkey_path, witness_path);
+
+    // convert proof to solidity calldata
+    const solidityCallData = await convertProofToSolidityCalldata(proof, publicSignals);
+
+    // fill the order with the valid proof 
+    await ouragan.fill(solidityCallData.a, solidityCallData.b, solidityCallData.c, solidityCallData.pubSignals);
   });
 });
